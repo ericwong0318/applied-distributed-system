@@ -4,7 +4,7 @@ import {createBrowserRouter, RouterProvider,} from "react-router-dom";
 import Register from "./Register";
 import Login from "./Login";
 import Error from "./Error";
-import ForgetPassword from "./ForgetPassword";
+import ResetPassword from "./ResetPassword";
 
 const router = createBrowserRouter([
     // register
@@ -22,8 +22,8 @@ const router = createBrowserRouter([
 
     // forget password
     {
-        path: "/forget-password",
-        element: <ForgetPassword/>,
+        path: "/reset-password",
+        element: <ResetPassword/>,
     },
 
     // chatting page

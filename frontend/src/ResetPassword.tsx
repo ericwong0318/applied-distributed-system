@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
 
-export default function ForgetPassword() {
+export default function ResetPassword() {
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -31,7 +31,7 @@ export default function ForgetPassword() {
                 }}
             >
                 <Typography component="h1" variant="h4">
-                    Forget password
+                    Reset password
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
                     <TextField
