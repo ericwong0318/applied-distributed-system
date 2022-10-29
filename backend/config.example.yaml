@@ -1,0 +1,8 @@
+# Server configurations
+server:
+  host: "localhost"
+  port: "8081"
+
+# Database credentials
+database:
+  uri:
