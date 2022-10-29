@@ -39,16 +39,6 @@ export default function Register() {
                             <TextField
                                 required
                                 fullWidth
-                                id="userName"
-                                label="User Name"
-                                name="username"
-                                autoFocus
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                required
-                                fullWidth
                                 id="email"
                                 label="Email Address"
                                 name="email"
