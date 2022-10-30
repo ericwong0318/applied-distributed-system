@@ -15,8 +15,21 @@ export default function ResetPassword() {
         const data = new FormData(event.currentTarget);
         console.log({
             email: data.get('email'),
-            password: data.get('password'),
         });
+        // Send email and password to backend
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/register`, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: data.get('email'),
+            })
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log(result)
+            })
     };
 
     return (

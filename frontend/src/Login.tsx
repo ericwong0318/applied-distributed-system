@@ -19,6 +19,22 @@ export default function Login() {
             email: data.get('email'),
             password: data.get('password'),
         });
+
+        // Send email and password to backend
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/login`, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: data.get('email'),
+                password: data.get('password'),
+            })
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log(result)
+            })
     };
 
     return (
