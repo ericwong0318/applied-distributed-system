@@ -2,6 +2,9 @@
 server:
   host: "localhost"
   port: "8081"
+  email-host: "smtp.gmail.com"
+  email-address: "ericwong0318@gmail.com"
+  email-address-password:
 
 # Database credentials
 database:
