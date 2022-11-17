@@ -46,7 +46,7 @@ func main() {
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 
-	// listened port
+	// Listened port
 	listenedAddress := viper.GetString("server.host") + ":" + viper.GetString("server.port")
 	if err := r.Run(listenedAddress); err != nil {
 		log.Fatalln("Main function failed")
@@ -159,9 +159,9 @@ func ResetPassword(c *gin.Context) {
 	// Generate random password
 	// Seed(1)
 	randomPassword := strconv.Itoa(rand.Intn(1000000)) // 6 digits random password
-	fmt.Println(randomPassword)
-	hashedPassword, err := HashPassword(randomPassword)
+
 	// Update password to random password in database.
+	hashedPassword, err := HashPassword(randomPassword)
 	coll := Client.Database("account").Collection("users")
 	filter := bson.D{{"email", user.Email}}
 	update := bson.D{{"$set", bson.D{{"password", hashedPassword}}}}
