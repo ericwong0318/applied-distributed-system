@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,7 +21,8 @@ import (
 )
 
 var (
-	Client *mongo.Client
+	Client     *mongo.Client
+	hmacSecret []byte
 )
 
 func main() {
@@ -35,6 +37,9 @@ func main() {
 	// Connect database
 	uri := viper.GetString("database.uri")
 	Client = getDBClient(uri)
+
+	// Get HMAC secrete
+	hmacSecret = []byte(viper.GetString("server.hmac-secrete"))
 
 	// Routes
 
@@ -123,30 +128,56 @@ func Register(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	var user models.User
-	if c.ShouldBind(&user) == nil {
-		log.Println(user.Email)
-	}
+	// Read cookie for JWT
+	tokenString, err := c.Cookie("tokenString")
+	if err == nil {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
 
-	// Read database
-	coll := Client.Database("account").Collection("users")
-	var result models.User
-	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
-
-	// Email not found
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, "Email not found")
-			return
+			return hmacSecret, nil
+		})
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			fmt.Println(claims["email"], claims["password"])
+		} else {
+			fmt.Println(err)
 		}
-		panic(err)
-	}
 
-	// Check email and password
-	if user.Email == result.Email && comparePasswordAndHashedPassword(user.Password, result.Password) {
-		c.JSON(http.StatusOK, "Login successfully")
-	} else {
-		c.JSON(http.StatusForbidden, "Wrong password")
+	} else if err == http.ErrNoCookie {
+		var user models.User
+		if c.ShouldBind(&user) == nil {
+			log.Println(user.Email)
+		}
+
+		// Read database
+		coll := Client.Database("account").Collection("users")
+		var result models.User
+		err = coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+
+		// Email not found
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, "Email not found")
+				return
+			}
+			panic(err)
+		}
+
+		// Check email and password
+		if user.Email == result.Email && comparePasswordAndHashedPassword(user.Password, result.Password) {
+			// generate JWT and set cookie
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"email":    result.Email,
+				"password": result.Password,
+			})
+			tokenString, _ := token.SignedString(hmacSecret)
+			c.JSON(http.StatusOK, "Login successfully")
+			c.SetCookie("tokenString", tokenString, 60*60*24, "/",
+				viper.GetString("server.host"), false, true)
+		} else {
+			c.JSON(http.StatusForbidden, "Wrong password")
+		}
 	}
 }
 
