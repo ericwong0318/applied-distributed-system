@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"strconv"
+	"time"
 )
 
 var (
@@ -44,12 +45,23 @@ func main() {
 	// Routes
 
 	r := gin.Default()
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		// Access-Control-Allow-Origin: * is not allowed when send with credentials in frontend
+		AllowOrigins: []string{"http://" + viper.GetString("front-end.host") + ":" +
+			viper.GetString("front-end.port")},
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "X-Requested-With",
+			"Set-Cookie"},
+		ExposeHeaders:    []string{"Set-Cookie"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Authentications
 	r.POST("/register", Register)
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
+	r.POST("/check-jwt", CheckJwt)
 
 	// Listened port
 	listenedAddress := viper.GetString("server.host") + ":" + viper.GetString("server.port")
@@ -127,57 +139,63 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, "Account created")
 }
 
-func Login(c *gin.Context) {
-	// Read cookie for JWT
+func CheckJwt(c *gin.Context) { // Read cookie for JWT
 	tokenString, err := c.Cookie("tokenString")
-	if err == nil {
+	if err == nil { // TokenString exists
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-
 			return hmacSecret, nil
 		})
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			fmt.Println(claims["email"], claims["password"])
+		if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			c.JSON(http.StatusOK, "JWT is valid")
 		} else {
 			fmt.Println(err)
 		}
-
 	} else if err == http.ErrNoCookie {
-		var user models.User
-		if c.ShouldBind(&user) == nil {
-			log.Println(user.Email)
-		}
+		c.JSON(http.StatusUnauthorized, "Have not login")
+	} else {
+		c.JSON(http.StatusInternalServerError, "Cookie error")
+	}
+	return
+}
 
-		// Read database
-		coll := Client.Database("account").Collection("users")
-		var result models.User
-		err = coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+func Login(c *gin.Context) {
+	var user models.User
+	if c.ShouldBind(&user) != nil {
+		c.JSON(http.StatusUnauthorized, "Have not login")
+		return
+	}
 
-		// Email not found
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusNotFound, "Email not found")
-				return
-			}
-			panic(err)
-		}
+	// Read database
+	coll := Client.Database("account").Collection("users")
+	var result models.User
+	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 
-		// Check email and password
-		if user.Email == result.Email && comparePasswordAndHashedPassword(user.Password, result.Password) {
-			// generate JWT and set cookie
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"email":    result.Email,
-				"password": result.Password,
-			})
-			tokenString, _ := token.SignedString(hmacSecret)
-			c.JSON(http.StatusOK, "Login successfully")
-			c.SetCookie("tokenString", tokenString, 60*60*24, "/",
-				viper.GetString("server.host"), false, true)
-		} else {
-			c.JSON(http.StatusForbidden, "Wrong password")
+	// Email not found
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, "Email not found")
+			return
 		}
+		panic(err)
+	}
+
+	// Check email and password
+	if user.Email == result.Email && comparePasswordAndHashedPassword(user.Password, result.Password) {
+		// Generate JWT and set cookie
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"email":    result.Email,
+			"password": result.Password,
+		})
+		tokenString, _ := token.SignedString(hmacSecret)
+		c.SetSameSite(http.SameSiteNoneMode)
+		c.SetCookie("tokenString", tokenString, 60*60*1000, "/",
+			viper.GetString("server.host"), true, false) // maxAge = second * 1000
+		c.JSON(http.StatusOK, "Login successfully")
+	} else {
+		c.JSON(http.StatusForbidden, "Wrong password")
 	}
 }
 
