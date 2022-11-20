@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useEffect} from 'react';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
@@ -9,33 +10,49 @@ import Container from '@mui/material/Container';
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Link from '@mui/material/Link'
+import {useSnackbar} from 'notistack';
+// @ts-ignore
+import {AuthContext, checkJwt} from "./App.tsx";
+import {useNavigate} from "react-router-dom";
 
 
 export default function Login() {
+    const {enqueueSnackbar} = useSnackbar();
+    // @ts-ignore
+    const {isLogin, setIsLogin} = React.useContext(AuthContext);
+    const navigate = useNavigate();
+
+    // check isLogin
+    useEffect(() => {
+        checkJwt(isLogin)
+        if (isLogin) {
+            navigate("/chat");
+        }
+    }, [isLogin, navigate])
+
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
-
         // Send email and password to backend
         fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/login`, {
             method: "POST",
-            headers: {
-                'Content-type': 'application/json',
-            },
+            credentials: "include", // for receiving cookie
+            headers: {'Content-type': 'application/json',},
             body: JSON.stringify({
                 email: data.get('email'),
                 password: data.get('password'),
             })
         })
-            .then((response) => response.json())
-            .then((result) => {
-                console.log(result)
+            .then((response) => {
+                if (response.ok) {
+                    setIsLogin(true)
+                    navigate("/chat");
+                }
+                return response.json();
             })
-    };
+            .then((json) => (enqueueSnackbar(json)))
+            .catch((err) => console.error(err.message))
+    }
 
     return (
         <Container component="main" maxWidth="xs">

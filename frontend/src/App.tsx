@@ -1,10 +1,13 @@
-import React from 'react';
+import React, {createContext, useEffect, useState} from 'react';
+import {createBrowserRouter, RouterProvider} from "react-router-dom";
+import {SnackbarProvider} from 'notistack';
 import ClippedDrawer from "./ClippedDrawer";
-import {createBrowserRouter, RouterProvider,} from "react-router-dom";
 import Register from "./Register";
 import Login from "./Login";
 import Error from "./Error";
 import ResetPassword from "./ResetPassword";
+
+export const AuthContext = createContext(undefined);
 
 const router = createBrowserRouter([
     // register
@@ -31,12 +34,40 @@ const router = createBrowserRouter([
         path: "/chat", // credential
         element: <ClippedDrawer/>,
     },
-]);
+],);
+
+export function checkJwt(setIsLogin: (value: (((prevState: boolean) => boolean) | boolean)) => void) {
+    fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/check-jwt`, {
+        method: "POST",
+        credentials: "include", // for receiving cookie
+        headers: {'Content-type': 'application/json'},
+    })
+        .then((response) => {
+            if (response.ok) {
+                setIsLogin(true)
+            }
+        })
+        .catch((err) => console.error(err.message))
+}
 
 function App() {
+    // global states
+    const [isLogin, setIsLogin] = useState(false);
+
+    useEffect(() => {
+        // check credential
+        checkJwt(setIsLogin);
+    }, []);
+
     return (
         <div className="App">
-            <RouterProvider router={router}/>
+            {/*context's default value type is not matched the below value type*/}
+            {/* @ts-ignore*/}
+            <AuthContext.Provider value={{isLogin, setIsLogin}}>
+                <SnackbarProvider maxSnack={3}>
+                    <RouterProvider router={router}/>
+                </SnackbarProvider>
+            </AuthContext.Provider>
         </div>
     );
 }
