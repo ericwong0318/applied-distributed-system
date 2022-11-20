@@ -5,7 +5,13 @@ server:
   email-host: "smtp.gmail.com"
   email-address: "ericwong0318@gmail.com"
   email-address-password:
+  hmac-secrete:
 
 # Database credentials
 database:
   uri:
+
+# Front-end
+front-end:
+  host: "localhost"
+  port: "3000"
