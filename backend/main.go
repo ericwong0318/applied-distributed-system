@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/olahol/melody"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,12 +40,21 @@ func main() {
 	uri := viper.GetString("database.uri")
 	Client = getDBClient(uri)
 
+	// Disconnect database
+	defer func() {
+		if err := Client.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
+
 	// Get HMAC secrete
 	hmacSecret = []byte(viper.GetString("server.hmac-secrete"))
 
 	// Routes
 
 	r := gin.Default()
+
+	// CORS configuration
 	r.Use(cors.New(cors.Config{
 		// Access-Control-Allow-Origin: * is not allowed when send with credentials in frontend
 		AllowOrigins: []string{"http://" + viper.GetString("front-end.host") + ":" +
@@ -57,11 +67,29 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Melody
+	m := melody.New()
+
 	// Authentications
 	r.POST("/register", Register)
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
+
+	// Websocket
+	r.GET("/ws", func(c *gin.Context) {
+		err := m.HandleRequest(c.Writer, c.Request)
+		if err != nil {
+			return
+		}
+	})
+
+	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		err := m.Broadcast(msg)
+		if err != nil {
+			return
+		}
+	})
 
 	// Listened port
 	listenedAddress := viper.GetString("server.host") + ":" + viper.GetString("server.port")
@@ -69,13 +97,6 @@ func main() {
 		log.Fatalln("Main function failed")
 		return
 	}
-
-	// Disconnect database
-	defer func() {
-		if err := Client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
 }
 
 func getDBClient(uri string) *mongo.Client {
