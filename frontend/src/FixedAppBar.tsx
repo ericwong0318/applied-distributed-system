@@ -7,10 +7,7 @@ import Box from "@mui/material/Box";
 import Cookies from 'js-cookie';
 import {useNavigate} from "react-router-dom";
 
-export function FixedAppBar(props: {
-    zIndex: (theme: any) => number, auth: boolean,
-    onClick: (event: React.MouseEvent<HTMLElement>) => void, anchorEl: HTMLElement | null, onClose: () => void
-}) {
+export function FixedAppBar(props: { zIndex: (theme: any) => number }) {
     const navigate = useNavigate();
 
     function handleLogout() {

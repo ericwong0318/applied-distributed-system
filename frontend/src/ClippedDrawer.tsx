@@ -39,27 +39,11 @@ export default function ClippedDrawer() {
         {name: "Group 2", type: "group"},
     ];
 
-    const [auth, setAuth] = React.useState(true);
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setAuth(event.target.checked);
-    };
-
-    // app bar props
-    const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
-
     return (
         <Box sx={{display: 'flex'}}>
             <CssBaseline/>
 
-            <FixedAppBar zIndex={(theme) => theme.zIndex.drawer + 1} auth={auth} onClick={handleMenu}
-                         anchorEl={anchorEl} onClose={handleClose}/>
+            <FixedAppBar zIndex={(theme) => theme.zIndex.drawer + 1}/>
 
             {/*sidebar*/}
             <Drawer
