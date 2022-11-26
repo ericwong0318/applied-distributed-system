@@ -1,11 +1,31 @@
 import * as React from 'react';
+import {useState} from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Grid from "@mui/material/Unstable_Grid2";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
 
-export default function Sender() {
+interface TextFieldEvent {
+    target: {
+        value: string
+    }
+}
+
+export default function Sender(prop: { ws: WebSocket }) {
+    const [textFieldValue, setTextFieldValue] = useState("");
+
+    function handleChange(event: TextFieldEvent) {
+        setTextFieldValue(event.target.value);
+    }
+
+    function handleSubmit(e: { preventDefault: () => void; }) {
+        e.preventDefault();
+        // Send data using websocket
+        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue);
+        console.log(textFieldValue);
+    }
+
     return (
         <Box
             sx={{
@@ -21,10 +41,12 @@ export default function Sender() {
                         placeholder="Happy chatting"
                         multiline
                         fullWidth
+                        value={textFieldValue}
+                        onChange={handleChange}
                     />
                 </Grid>
                 <Grid>
-                    <IconButton size="small">
+                    <IconButton size="small" onClick={handleSubmit}>
                         <SendIcon/>
                     </IconButton>
                 </Grid>

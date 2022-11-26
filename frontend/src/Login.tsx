@@ -46,6 +46,7 @@ export default function Login() {
             .then((response) => {
                 if (response.ok) {
                     setIsLogin(true)
+                    localStorage.setItem('email', data.get('email') as string);
                     navigate("/chat");
                 }
                 return response.json();
