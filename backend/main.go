@@ -75,11 +75,11 @@ func main() {
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
 
-	// Websocket
-	r.GET("/ws", func(c *gin.Context) {
+	// WebSocket
+	r.GET("/channel/:name/ws", func(c *gin.Context) {
 		err := m.HandleRequest(c.Writer, c.Request)
 		if err != nil {
-			return
+			c.JSON(http.StatusInternalServerError, "WebSocket fails")
 		}
 	})
 
