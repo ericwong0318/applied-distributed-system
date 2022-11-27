@@ -15,8 +15,11 @@ import {FixedAppBar} from "./FixedAppBar";
 import {ListItemIcon} from "@mui/material";
 
 export default function ClippedDrawer() {
-    // resize drawer width
     const [drawerWidth, setDrawerWidth] = React.useState(400)
+    const [url, setUrl] = useState("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
+        process.env.REACT_APP_PORT + "/channel" + "/1" + "/ws")
+
+    // resize drawer width
     React.useEffect(() => {
         function updateSize() {
             if (window.innerWidth >= 1024) {
@@ -25,6 +28,7 @@ export default function ClippedDrawer() {
                 setDrawerWidth(window.innerWidth * 0.1)
             }
         }
+
         window.addEventListener('resize', updateSize);
         updateSize();
         return () => window.removeEventListener('resize', updateSize);
@@ -37,15 +41,11 @@ export default function ClippedDrawer() {
         {cid: 3, name: "Group 1", type: "group"},
         {cid: 4, name: "Group 2", type: "group"},
     ];
-    const [url, setUrl] = useState("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
-        process.env.REACT_APP_PORT + "/channel" + "/1" + "/ws")
-    const [ws, setWs] = useState(new WebSocket(url));
 
     const handleChangeChannel = (cid: number) => {
         // change websocket connection
         setUrl("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
             + "/" + cid + "/ws");
-        setWs(new WebSocket(url));
     }
 
     return (
@@ -58,8 +58,7 @@ export default function ClippedDrawer() {
             <Drawer
                 variant="permanent"
                 sx={{
-                    width: drawerWidth,
-                    flexShrink: 0,
+                    width: drawerWidth, flexShrink: 0,
                     [`& .MuiDrawer-paper`]: {width: drawerWidth, boxSizing: 'border-box'},
                 }}
             >
@@ -83,7 +82,7 @@ export default function ClippedDrawer() {
             </Drawer>
 
             {/*main content e.g. messages and text-field*/}
-            <MainContent ws={ws}/>
+            <MainContent url={url} />
         </Box>
     );
 }

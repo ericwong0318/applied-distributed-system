@@ -7,8 +7,6 @@ import {useEffect, useState} from "react";
 import {Divider} from "@mui/material";
 import Sender from "./Sender";
 
-let messageKey = 0;
-
 interface MessageData {
     key: number,
     userName: string,
@@ -26,11 +24,21 @@ function Message(props: { userName: string, time: string, content: string }) {
     </Grid>;
 }
 
-export function MainContent(props: {ws: WebSocket}) {
+export function MainContent(props: { url: string }) {
+    const [ws, setWs] = useState(new WebSocket(props.url))
     const [messages, setMessages] = useState<MessageData[]>([]);
+    const [messageKey, setMessageKey] = useState(0);
+
     useEffect(() => {
-        // Websocket
-        props.ws.onmessage = function (msg) {
+        // if websocket is changed
+        if (props.url !== ws.url) {
+            console.log("setWs " + props.url);
+            setWs(new WebSocket(props.url));
+            setMessages([]);
+        }
+
+        // websocket receive messages
+        ws.onmessage = function (msg) {
             let data = msg.data.split(";");
             let NewMessage: MessageData[] = messages.concat([{
                 key: messageKey,
@@ -38,10 +46,10 @@ export function MainContent(props: {ws: WebSocket}) {
                 time: data[1],
                 content: data[2]
             }]);
-            messageKey++;
+            setMessageKey(messageKey + 1);
             setMessages(NewMessage);
         }
-    })
+    }, [messages, messageKey, ws, props.url])
 
     return <>
         {/*main content*/}
@@ -52,15 +60,8 @@ export function MainContent(props: {ws: WebSocket}) {
                     <Message key={value.key} userName={value.userName} time={value.time} content={value.content}/>
                 )}
             </Grid>
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    p: 1,
-                    m: 1,
-                }}
-            >
-                <Sender ws={props.ws}/>
+            <Box sx={{display: 'flex', alignItems: 'flex-end', p: 1, m: 1,}}>
+                <Sender ws={ws}/>
             </Box>
         </Box>
     </>
