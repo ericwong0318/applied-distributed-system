@@ -7,8 +7,6 @@ import {useEffect, useState} from "react";
 import {Divider} from "@mui/material";
 import Sender from "./Sender";
 
-let url = "ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/ws";
-let ws = new WebSocket(url);
 let messageKey = 0;
 
 interface MessageData {
@@ -28,11 +26,11 @@ function Message(props: { userName: string, time: string, content: string }) {
     </Grid>;
 }
 
-export function MainContent() {
+export function MainContent(props: {ws: WebSocket}) {
     const [messages, setMessages] = useState<MessageData[]>([]);
     useEffect(() => {
         // Websocket
-        ws.onmessage = function (msg) {
+        props.ws.onmessage = function (msg) {
             let data = msg.data.split(";");
             let NewMessage: MessageData[] = messages.concat([{
                 key: messageKey,
@@ -62,7 +60,7 @@ export function MainContent() {
                     m: 1,
                 }}
             >
-                <Sender ws={ws}/>
+                <Sender ws={props.ws}/>
             </Box>
         </Box>
     </>

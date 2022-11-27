@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useState} from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -14,7 +15,6 @@ import {FixedAppBar} from "./FixedAppBar";
 import {ListItemIcon} from "@mui/material";
 
 export default function ClippedDrawer() {
-
     // resize drawer width
     const [drawerWidth, setDrawerWidth] = React.useState(400)
     React.useEffect(() => {
@@ -25,24 +25,33 @@ export default function ClippedDrawer() {
                 setDrawerWidth(window.innerWidth * 0.1)
             }
         }
-
         window.addEventListener('resize', updateSize);
         updateSize();
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
     // placeholder for sidebar
-    let chatList: { name: string, type: "personal" | "group" }[] = [
-        {name: "Friend 1", type: "personal"},
-        {name: "Friend 2", type: "personal"},
-        {name: "Group 1", type: "group"},
-        {name: "Group 2", type: "group"},
+    let chatList: { cid: number, name: string, type: "personal" | "group" }[] = [
+        {cid: 1, name: "Friend 1", type: "personal"},
+        {cid: 2, name: "Friend 2", type: "personal"},
+        {cid: 3, name: "Group 1", type: "group"},
+        {cid: 4, name: "Group 2", type: "group"},
     ];
+    const [url, setUrl] = useState("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
+        process.env.REACT_APP_PORT + "/channel" + "/1" + "/ws")
+    const [ws, setWs] = useState(new WebSocket(url));
+
+    const handleChangeChannel = (cid: number) => {
+        // change websocket connection
+        setUrl("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
+            + "/" + cid + "/ws");
+        setWs(new WebSocket(url));
+    }
 
     return (
         <Box sx={{display: 'flex'}}>
+            {/*top bar*/}
             <CssBaseline/>
-
             <FixedAppBar zIndex={(theme) => theme.zIndex.drawer + 1}/>
 
             {/*sidebar*/}
@@ -58,10 +67,11 @@ export default function ClippedDrawer() {
                 <Box sx={{overflow: 'auto'}}>
                     <List>
                         {chatList.map((chat) => (
-                            <ListItem key={chat.name} disablePadding>
+                            <ListItem key={chat.cid} disablePadding onClick={() => handleChangeChannel(chat.cid)}>
                                 <ListItemButton>
                                     <ListItemIcon>
-                                        {chat.type === "personal" ? <ChatBubbleIcon fontSize={"small"}/> :
+                                        {chat.type === "personal" ?
+                                            <ChatBubbleIcon fontSize={"small"}/> :
                                             <ForumIcon fontSize={"small"}/>}
                                     </ListItemIcon>
                                     <ListItemText primary={chat.name}/>
@@ -73,9 +83,7 @@ export default function ClippedDrawer() {
             </Drawer>
 
             {/*main content e.g. messages and text-field*/}
-            <MainContent/>
-
+            <MainContent ws={ws}/>
         </Box>
-
     );
 }
