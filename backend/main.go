@@ -23,6 +23,7 @@ import (
 
 var (
 	Client     *mongo.Client
+	ctx        context.Context
 	hmacSecret []byte
 )
 
@@ -37,11 +38,11 @@ func main() {
 
 	// Connect database
 	uri := viper.GetString("database.uri")
-	Client = getDBClient(uri)
+	Client, ctx = getDBClient(uri)
 
 	// Disconnect database
 	defer func() {
-		if err := Client.Disconnect(context.TODO()); err != nil {
+		if err := Client.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
@@ -97,7 +98,8 @@ func main() {
 		return
 	}
 }
-func getDBClient(uri string) *mongo.Client {
+
+func getDBClient(uri string) (*mongo.Client, context.Context) {
 	// Connect database
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
@@ -109,7 +111,7 @@ func getDBClient(uri string) *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return client
+	return client, ctx
 }
 
 // Hashing
@@ -137,7 +139,7 @@ func Register(c *gin.Context) {
 	// Check email is registered
 	coll := Client.Database("account").Collection("users")
 	var result models.User
-	if err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result); err == nil {
+	if err := coll.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result); err == nil {
 		// If we get ErrNoDocuments, the email is used
 		c.JSON(http.StatusBadRequest, "The email is used")
 		return
@@ -148,7 +150,7 @@ func Register(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = coll.InsertOne(context.TODO(), bson.D{{"email", user.Email},
+	_, err = coll.InsertOne(ctx, bson.D{{"email", user.Email},
 		{"password", hashedPassword}})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
@@ -191,7 +193,7 @@ func Login(c *gin.Context) {
 	// Read database
 	coll := Client.Database("account").Collection("users")
 	var result models.User
-	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+	err := coll.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result)
 
 	// Email not found
 	if err != nil {
@@ -235,7 +237,7 @@ func ResetPassword(c *gin.Context) {
 	filter := bson.D{{"email", user.Email}}
 	update := bson.D{{"$set", bson.D{{"password", hashedPassword}}}}
 	opts := options.Update().SetUpsert(false)
-	result, err := coll.UpdateOne(context.TODO(), filter, update, opts)
+	result, err := coll.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
