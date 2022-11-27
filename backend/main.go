@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"math/rand"
@@ -98,17 +97,17 @@ func main() {
 		return
 	}
 }
-
 func getDBClient(uri string) *mongo.Client {
 	// Connect database
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().
+		ApplyURI(uri).
+		SetServerAPIOptions(serverAPIOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		panic(err)
-	}
-
-	// Ping the primary
-	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return client
 }
