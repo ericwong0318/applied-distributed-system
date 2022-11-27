@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -85,9 +86,23 @@ func main() {
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		err := m.Broadcast(msg)
+		// Store message into database
+		fmt.Println(string(msg))
+		messageData := strings.Split(string(msg), ";")
+		coll := Client.Database("account").Collection("messages")
+		message := models.Message{Email: messageData[0], Time: messageData[1], Content: messageData[2]}
+		fmt.Println(message)
+		_, err := coll.InsertOne(ctx, message)
 		if err != nil {
-			return
+			panic("Insert fails")
+		}
+
+		// Handle broadcast
+		err = m.BroadcastFilter(msg, func(q *melody.Session) bool {
+			return q.Request.URL.Path == s.Request.URL.Path
+		})
+		if err != nil {
+			panic("Broadcast fails")
 		}
 	})
 
