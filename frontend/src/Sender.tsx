@@ -45,6 +45,11 @@ export default function Sender(prop: { ws: WebSocket }) {
                         fullWidth
                         value={textFieldValue}
                         onChange={handleChange}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleSubmit(e)
+                            }
+                        }}
                     />
                 </Grid>
                 <Grid>
