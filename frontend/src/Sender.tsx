@@ -5,6 +5,7 @@ import TextField from '@mui/material/TextField';
 import Grid from "@mui/material/Unstable_Grid2";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
+import {getRandom} from "./Helper";
 
 interface TextFieldEvent {
     target: {
@@ -22,7 +23,8 @@ export default function Sender(prop: { ws: WebSocket }) {
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
         // Send data using websocket
-        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue);
+        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue
+            + ";" + getRandom(100000000000000));
         console.log(textFieldValue);
     }
 
