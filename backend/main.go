@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/controllers"
 	"backend/models"
 	"context"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -39,7 +39,7 @@ func main() {
 
 	// Connect database
 	uri := viper.GetString("database.uri")
-	Client, ctx = getDBClient(uri)
+	Client, ctx = controllers.GetDBClient(uri)
 
 	// Disconnect database
 	defer func() {
@@ -119,34 +119,20 @@ func main() {
 	}
 }
 
-func getDBClient(uri string) (*mongo.Client, context.Context) {
-	// Connect database
-	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().
-		ApplyURI(uri).
-		SetServerAPIOptions(serverAPIOptions)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client, ctx
-}
-
-// Hashing
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	return string(bytes), err
-}
-
-func comparePasswordAndHashedPassword(password, hash string) bool {
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
-		return false
-	}
-	return true
-}
+//func getDBClient(uri string) (*mongo.Client, context.Context) {
+//	// Connect database
+//	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+//	clientOptions := options.Client().
+//		ApplyURI(uri).
+//		SetServerAPIOptions(serverAPIOptions)
+//	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+//	defer cancel()
+//	client, err := mongo.Connect(ctx, clientOptions)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	return client, ctx
+//}
 
 // User services
 
@@ -166,7 +152,7 @@ func Register(c *gin.Context) {
 	}
 
 	// Create user
-	hashedPassword, err := HashPassword(user.Password)
+	hashedPassword, err := controllers.HashPassword(user.Password)
 	if err != nil {
 		panic(err)
 	}
@@ -225,7 +211,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Check email and password
-	if user.Email == result.Email && comparePasswordAndHashedPassword(user.Password, result.Password) {
+	if user.Email == result.Email && controllers.ComparePasswordAndHashedPassword(user.Password, result.Password) {
 		// Generate JWT and set cookie
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"email":    result.Email,
@@ -252,7 +238,7 @@ func ResetPassword(c *gin.Context) {
 	randomPassword := strconv.Itoa(rand.Intn(1000000)) // 6 digits random password
 
 	// Update password to random password in database.
-	hashedPassword, err := HashPassword(randomPassword)
+	hashedPassword, err := controllers.HashPassword(randomPassword)
 	coll := Client.Database("account").Collection("users")
 	filter := bson.D{{"email", user.Email}}
 	update := bson.D{{"$set", bson.D{{"password", hashedPassword}}}}
