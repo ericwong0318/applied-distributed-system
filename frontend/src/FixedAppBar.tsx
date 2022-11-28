@@ -12,6 +12,7 @@ export function FixedAppBar(props: { zIndex: (theme: any) => number }) {
 
     function handleLogout() {
         Cookies.remove("tokenString");
+        localStorage.clear();
         navigate("/");
     }
 
