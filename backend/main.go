@@ -87,12 +87,11 @@ func main() {
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
 		// Store message into database
-		fmt.Println(string(msg))
 		messageData := strings.Split(string(msg), ";")
 		coll := Client.Database("account").Collection("messages")
 		message := models.Message{Email: messageData[0], Time: messageData[1], Content: messageData[2]}
 		fmt.Println(message)
-		_, err := coll.InsertOne(ctx, message)
+		_, err := coll.InsertOne(context.TODO(), message)
 		if err != nil {
 			panic("Insert fails")
 		}
@@ -154,7 +153,7 @@ func Register(c *gin.Context) {
 	// Check email is registered
 	coll := Client.Database("account").Collection("users")
 	var result models.User
-	if err := coll.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result); err == nil {
+	if err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result); err == nil {
 		// If we get ErrNoDocuments, the email is used
 		c.JSON(http.StatusBadRequest, "The email is used")
 		return
@@ -165,7 +164,7 @@ func Register(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = coll.InsertOne(ctx, bson.D{{"email", user.Email},
+	_, err = coll.InsertOne(context.TODO(), bson.D{{"email", user.Email},
 		{"password", hashedPassword}})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
@@ -208,7 +207,7 @@ func Login(c *gin.Context) {
 	// Read database
 	coll := Client.Database("account").Collection("users")
 	var result models.User
-	err := coll.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result)
+	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 
 	// Email not found
 	if err != nil {
@@ -252,7 +251,7 @@ func ResetPassword(c *gin.Context) {
 	filter := bson.D{{"email", user.Email}}
 	update := bson.D{{"$set", bson.D{{"password", hashedPassword}}}}
 	opts := options.Update().SetUpsert(false)
-	result, err := coll.UpdateOne(ctx, filter, update, opts)
+	result, err := coll.UpdateOne(context.TODO(), filter, update, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
