@@ -76,6 +76,7 @@ func main() {
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
+	r.POST("/change-channel", ChangeChannel)
 
 	// WebSocket
 	r.GET("/channel/:name/ws", func(c *gin.Context) {
@@ -276,4 +277,29 @@ func ResetPassword(c *gin.Context) {
 		log.Fatal(err)
 	}
 	c.JSON(http.StatusOK, "Email sent")
+}
+
+func ChangeChannel(c *gin.Context) {
+	// Parse JSON
+	var requestJson struct {
+		Email     string
+		ChannelId int
+	}
+	if c.Bind(&requestJson) != nil {
+		panic("Input is invalid")
+	}
+
+	// Read database
+	coll := Client.Database("account").Collection("messages")
+	cursor, err := coll.Find(context.TODO(), bson.D{{"channeled", requestJson.ChannelId}})
+	if err != nil {
+		panic("Change channel fails")
+	}
+
+	// Response JSON
+	var message []models.Message
+	if err = cursor.All(context.TODO(), &message); err != nil {
+		panic("Convert cursor to result fails")
+	}
+	c.JSON(http.StatusOK, gin.H{"data": []interface{}{message}})
 }
