@@ -23,7 +23,7 @@ export default function Sender(prop: { ws: WebSocket }) {
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
         prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue
-            + ";" + uuidv4()); // Send data using websocket
+            + ";" + uuidv4() + ";" + localStorage.getItem("channelId")); // Send data using websocket
         setTextFieldValue(""); // Clean input
     }
 

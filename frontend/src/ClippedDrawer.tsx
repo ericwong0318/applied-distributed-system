@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -13,11 +13,15 @@ import ForumIcon from '@mui/icons-material/Forum';
 import {MainContent} from "./MainContent";
 import {FixedAppBar} from "./FixedAppBar";
 import {ListItemIcon} from "@mui/material";
+import {MessageInterface} from "./Interfaces";
+import Typography from "@mui/material/Typography";
 
 export default function ClippedDrawer() {
     const [drawerWidth, setDrawerWidth] = React.useState(400)
-    const [url, setUrl] = useState("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
-        process.env.REACT_APP_PORT + "/channel" + "/1" + "/ws")
+    const [messages, setMessages] = useState<MessageInterface[]>([]);
+    const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
+        process.env.REACT_APP_PORT + "/channel" + "/0" + "/ws"));
+    const [channelId, setChannelId] = useState(-1);
 
     // resize drawer width
     React.useEffect(() => {
@@ -34,18 +38,80 @@ export default function ClippedDrawer() {
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
+    useEffect(() => {
+        // if websocket is changed
+        // if (url !== ws.url) {
+        //     setWs(new WebSocket(url));
+        // }
+
+        // WebSocket receive messages
+        ws.onmessage = function (msg) {
+            let data = msg.data.split(";");
+            let NewMessage: MessageInterface[] = messages.concat([{
+                messageId: data[3],
+                email: data[0],
+                // @ts-ignore
+                channelId: parseInt(localStorage.getItem("channelId")),
+                time: data[1],
+                content: data[2]
+            }]);
+            console.log(NewMessage);
+            setMessages(NewMessage);
+        }
+    }, [messages, ws])
+
     // placeholder for sidebar
-    let chatList: { cid: number, name: string, type: "personal" | "group" }[] = [
-        {cid: 1, name: "Friend 1", type: "personal"},
-        {cid: 2, name: "Friend 2", type: "personal"},
-        {cid: 3, name: "Group 1", type: "group"},
-        {cid: 4, name: "Group 2", type: "group"},
+    let chatList: { channelId: number, name: string, type: "personal" | "group" }[] = [
+        {channelId: 0, name: "Friend 1", type: "personal"},
+        {channelId: 1, name: "Friend 2", type: "personal"},
+        {channelId: 2, name: "Group 1", type: "group"},
+        {channelId: 3, name: "Group 2", type: "group"},
     ];
 
-    const handleChangeChannel = (cid: number) => {
+    const handleChangeChannel = (newChannelId: number) => {
+        setChannelId(newChannelId);
         // change websocket connection
-        setUrl("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
-            + "/" + cid + "/ws");
+        setWs(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
+            + "/" + newChannelId + "/ws"));
+        localStorage.setItem('channelId', String(newChannelId));
+
+        // Send channelId to backend
+        console.log(localStorage.getItem('email'));
+        console.log(newChannelId);
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/change-channel`, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: localStorage.getItem('email'),
+                channelId: newChannelId
+            })
+        })
+            .then((response) =>
+                response.json()
+            )
+            .then((result) => {
+                console.log(result);
+                let data = result.data[0];
+                let messages: MessageInterface[] = [];
+                if (data === null) {
+                    setMessages(messages)
+                    return;
+                }
+
+                // Build messages array
+                data.map((value: any, i: string | number) =>
+                    messages?.push({
+                        messageId: data[i].MessageId,
+                        email: data[i].Email,
+                        channelId: data[i].ChannelId,
+                        time: data[i].Time,
+                        content: data[i].Content
+                    }));
+
+                setMessages(messages);
+            })
     }
 
     return (
@@ -66,7 +132,8 @@ export default function ClippedDrawer() {
                 <Box sx={{overflow: 'auto'}}>
                     <List>
                         {chatList.map((chat) => (
-                            <ListItem key={chat.cid} disablePadding onClick={() => handleChangeChannel(chat.cid)}>
+                            <ListItem key={chat.channelId} disablePadding
+                                      onClick={() => handleChangeChannel(chat.channelId)}>
                                 <ListItemButton>
                                     <ListItemIcon>
                                         {chat.type === "personal" ?
@@ -82,7 +149,12 @@ export default function ClippedDrawer() {
             </Drawer>
 
             {/*main content e.g. messages and text-field*/}
-            <MainContent url={url} />
+            {channelId === -1 ?
+                <Typography variant="h5" align="center" m={50}>
+                    Please Select a channel.
+                </Typography> :
+                /*@ts-ignore*/
+                <MainContent message={messages} ws={ws}/>}
         </Box>
     );
 }
