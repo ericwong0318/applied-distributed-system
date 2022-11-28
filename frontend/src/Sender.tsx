@@ -5,6 +5,7 @@ import TextField from '@mui/material/TextField';
 import Grid from "@mui/material/Unstable_Grid2";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
+import {v4 as uuidv4} from 'uuid';
 
 interface TextFieldEvent {
     target: {
@@ -21,9 +22,9 @@ export default function Sender(prop: { ws: WebSocket }) {
 
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
-        // Send data using websocket
-        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue);
-        console.log(textFieldValue);
+        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue
+            + ";" + uuidv4() + ";" + localStorage.getItem("channelId")); // Send data using websocket
+        setTextFieldValue(""); // Clean input
     }
 
     return (
@@ -43,6 +44,11 @@ export default function Sender(prop: { ws: WebSocket }) {
                         fullWidth
                         value={textFieldValue}
                         onChange={handleChange}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleSubmit(e)
+                            }
+                        }}
                     />
                 </Grid>
                 <Grid>
