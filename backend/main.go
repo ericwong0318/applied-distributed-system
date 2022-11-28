@@ -90,9 +90,14 @@ func main() {
 		// Store message into database
 		messageData := strings.Split(string(msg), ";")
 		coll := Client.Database("account").Collection("messages")
-		message := models.Message{Email: messageData[0], Time: messageData[1], Content: messageData[2]}
+		channelId, err := strconv.Atoi(messageData[4])
+		if err != nil {
+			panic("String to int fails")
+		}
+		message := models.Message{MessageId: messageData[3], Email: messageData[0], Time: messageData[1],
+			Content: messageData[2], ChannelId: channelId}
 		fmt.Println(message)
-		_, err := coll.InsertOne(context.TODO(), message)
+		_, err = coll.InsertOne(context.TODO(), message)
 		if err != nil {
 			panic("Insert fails")
 		}
@@ -291,7 +296,7 @@ func ChangeChannel(c *gin.Context) {
 
 	// Read database
 	coll := Client.Database("account").Collection("messages")
-	cursor, err := coll.Find(context.TODO(), bson.D{{"channeled", requestJson.ChannelId}})
+	cursor, err := coll.Find(context.TODO(), bson.D{{"channelid", requestJson.ChannelId}})
 	if err != nil {
 		panic("Change channel fails")
 	}

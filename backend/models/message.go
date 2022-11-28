@@ -1,7 +1,7 @@
 package models
 
 type Message struct {
-	// Email and ChannelId is primary key
+	MessageId string
 	Email     string
 	ChannelId int
 	Time      string
