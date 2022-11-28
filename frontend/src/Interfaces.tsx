@@ -1,5 +1,5 @@
 export interface MessageInterface {
-    messageId: number,
+    messageId: string,
     email: string,
     channelId: number,
     time: string,

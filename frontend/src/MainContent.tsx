@@ -6,13 +6,7 @@ import * as React from "react";
 import {useEffect, useState} from "react";
 import {Divider} from "@mui/material";
 import Sender from "./Sender";
-
-interface MessageData {
-    key: number,
-    userName: string,
-    time: string,
-    content: string
-}
+import {MessageInterface} from "./Interfaces"
 
 function Message(props: { userName: string, time: string, content: string }) {
     return <Grid xs={12}>
