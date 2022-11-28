@@ -12,18 +12,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/smtp"
 	"strconv"
+	"strings"
 	"time"
 )
 
 var (
 	Client     *mongo.Client
+	ctx        context.Context
 	hmacSecret []byte
 )
 
@@ -38,11 +39,11 @@ func main() {
 
 	// Connect database
 	uri := viper.GetString("database.uri")
-	Client = getDBClient(uri)
+	Client, ctx = getDBClient(uri)
 
 	// Disconnect database
 	defer func() {
-		if err := Client.Disconnect(context.TODO()); err != nil {
+		if err := Client.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
@@ -75,19 +76,38 @@ func main() {
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
+	r.POST("/change-channel", ChangeChannel)
 
-	// Websocket
-	r.GET("/ws", func(c *gin.Context) {
+	// WebSocket
+	r.GET("/channel/:name/ws", func(c *gin.Context) {
 		err := m.HandleRequest(c.Writer, c.Request)
 		if err != nil {
-			return
+			c.JSON(http.StatusInternalServerError, "WebSocket fails")
 		}
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		err := m.Broadcast(msg)
+		// Store message into database
+		messageData := strings.Split(string(msg), ";")
+		coll := Client.Database("account").Collection("messages")
+		channelId, err := strconv.Atoi(messageData[4])
 		if err != nil {
-			return
+			panic("String to int fails")
+		}
+		message := models.Message{MessageId: messageData[3], Email: messageData[0], Time: messageData[1],
+			Content: messageData[2], ChannelId: channelId}
+		fmt.Println(message)
+		_, err = coll.InsertOne(context.TODO(), message)
+		if err != nil {
+			panic("Insert fails")
+		}
+
+		// Handle broadcast
+		err = m.BroadcastFilter(msg, func(q *melody.Session) bool {
+			return q.Request.URL.Path == s.Request.URL.Path
+		})
+		if err != nil {
+			panic("Broadcast fails")
 		}
 	})
 
@@ -99,18 +119,19 @@ func main() {
 	}
 }
 
-func getDBClient(uri string) *mongo.Client {
+func getDBClient(uri string) (*mongo.Client, context.Context) {
 	// Connect database
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().
+		ApplyURI(uri).
+		SetServerAPIOptions(serverAPIOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-
-	// Ping the primary
-	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-		panic(err)
-	}
-	return client
+	return client, ctx
 }
 
 // Hashing
@@ -261,4 +282,29 @@ func ResetPassword(c *gin.Context) {
 		log.Fatal(err)
 	}
 	c.JSON(http.StatusOK, "Email sent")
+}
+
+func ChangeChannel(c *gin.Context) {
+	// Parse JSON
+	var requestJson struct {
+		Email     string
+		ChannelId int
+	}
+	if c.Bind(&requestJson) != nil {
+		panic("Input is invalid")
+	}
+
+	// Read database
+	coll := Client.Database("account").Collection("messages")
+	cursor, err := coll.Find(context.TODO(), bson.D{{"channelid", requestJson.ChannelId}})
+	if err != nil {
+		panic("Change channel fails")
+	}
+
+	// Response JSON
+	var message []models.Message
+	if err = cursor.All(context.TODO(), &message); err != nil {
+		panic("Convert cursor to result fails")
+	}
+	c.JSON(http.StatusOK, gin.H{"data": []interface{}{message}})
 }
