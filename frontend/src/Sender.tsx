@@ -22,10 +22,9 @@ export default function Sender(prop: { ws: WebSocket }) {
 
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
-        // Send data using websocket
         prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue
-            + ";" + getRandom(100000000000000));
-        console.log(textFieldValue);
+            + ";" + getRandom(100000000000000)); // Send data using websocket
+        setTextFieldValue(""); // Clean input
     }
 
     return (
