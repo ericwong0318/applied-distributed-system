@@ -9,12 +9,15 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import ForumIcon from '@mui/icons-material/Forum';
 import {MainContent} from "./MainContent";
 import {FixedAppBar} from "./FixedAppBar";
 import {ListItemIcon} from "@mui/material";
-import {MessageInterface} from "./Interfaces";
+import {ChannelInterface, MessageInterface} from "./Interfaces";
 import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Unstable_Grid2";
+import TextField from "@mui/material/TextField";
+import IconButton from "@mui/material/IconButton";
+import SendIcon from "@mui/icons-material/Send";
 
 export default function ClippedDrawer() {
     const [drawerWidth, setDrawerWidth] = React.useState(400)
@@ -22,6 +25,7 @@ export default function ClippedDrawer() {
     const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
         process.env.REACT_APP_PORT + "/channel" + "/0" + "/ws"));
     const [channelId, setChannelId] = useState(-1);
+    const [channels, setChannels] = useState<ChannelInterface[]>([])
 
     // resize drawer width
     React.useEffect(() => {
@@ -86,40 +90,17 @@ export default function ClippedDrawer() {
         // Send channelId to backend
         console.log(localStorage.getItem('email'));
         console.log(newChannelId);
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/change-channel`, {
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/read-messages`, {
             method: "POST",
-            headers: {
-                'Content-type': 'application/json',
-            },
+            headers: {'Content-type': 'application/json'},
             body: JSON.stringify({
                 email: localStorage.getItem('email'),
                 channelId: newChannelId
             })
         })
-            .then((response) =>
-                response.json()
-            )
-            .then((result) => {
-                console.log(result);
-                let data = result.data[0];
-                let messages: MessageInterface[] = [];
-                if (data === null) {
-                    setMessages(messages)
-                    return;
-                }
-
-                // Build messages array
-                data.map((value: any, i: string | number) =>
-                    messages?.push({
-                        messageId: data[i].MessageId,
-                        email: data[i].Email,
-                        channelId: data[i].ChannelId,
-                        time: data[i].Time,
-                        content: data[i].Content
-                    }));
-
-                setMessages(messages);
-            })
+            .then((response) => response.json())
+            .then((result) => setMessages(result))
+            .catch((err) => console.error(err))
     }
 
     return (
@@ -138,21 +119,48 @@ export default function ClippedDrawer() {
             >
                 <Toolbar/>
                 <Box sx={{overflow: 'auto'}}>
-                    <List>
-                        {chatList.map((chat) => (
-                            <ListItem key={chat.channelId} disablePadding
-                                      onClick={() => handleChangeChannel(chat.channelId)}>
-                                <ListItemButton>
-                                    <ListItemIcon>
-                                        {chat.type === "personal" ?
-                                            <ChatBubbleIcon fontSize={"small"}/> :
-                                            <ForumIcon fontSize={"small"}/>}
-                                    </ListItemIcon>
-                                    <ListItemText primary={chat.name}/>
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
-                    </List>
+                    <Grid container spacing={1}>
+                        <Grid xs={15}>
+                            <br/>
+                            <TextField
+                                id="text-field"
+                                label="New channel Id"
+                                placeholder="Happy chatting"
+                                // value={textFieldValue}
+                                // onChange={handleChange}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        // handleSubmit(e)
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid>
+                            <IconButton size="small"
+                                // onClick={handleSubmit}
+                            >
+                                <SendIcon/>
+                            </IconButton>
+                        </Grid>
+                    </Grid>
+                    {typeof channels === "undefined" ?
+                        <Typography variant="body2" align="center" m={10}>
+                            You don't have any channels. Please join a channel.
+                        </Typography> :
+                        <List>
+                            {channels.map((c) => (
+                                <ListItem key={c.channelId} disablePadding
+                                          onClick={() => handleChangeChannel(c.channelId)}>
+                                    <ListItemButton>
+                                        <ListItemIcon>
+                                            <ChatBubbleIcon fontSize={"small"}/>
+                                        </ListItemIcon>
+                                        <ListItemText primary={c.channelId.toString()}/>
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    }
                 </Box>
             </Drawer>
 

@@ -8,7 +8,7 @@ export interface MessageInterface {
     messageId: string,
     email: string,
     channelId: number,
-    time: string,
+    time: number,
     content: string
 }
 

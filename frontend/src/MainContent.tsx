@@ -7,9 +7,11 @@ import {Divider} from "@mui/material";
 import Sender from "./Sender";
 import {MessageInterface} from "./Interfaces"
 
-function Message(props: { userName: string, time: string, content: string }) {
+function Message(props: { userName: string, time: number, content: string }) {
     return <Grid xs={12}>
-        <Typography variant="subtitle1" m={1}><b>{props.userName} at </b>{props.time}</Typography>
+        <Typography variant="subtitle1" m={1}><b>{props.userName} at </b>
+            {new Date(props.time * 1000).toLocaleString()}
+        </Typography>
         <Typography variant="body2" m={1}>
             {props.content}
         </Typography>
@@ -17,13 +19,13 @@ function Message(props: { userName: string, time: string, content: string }) {
     </Grid>;
 }
 
-export function MainContent(props: {message: MessageInterface[], ws: WebSocket }) {
+export function MainContent(props: { message: MessageInterface[], ws: WebSocket }) {
     return <>
         {/*main content*/}
         <Box component="main" sx={{flexGrow: 1, p: 3}}>
             <Toolbar/>
             <Grid container spacing={2}>
-                {props.message.map((value) =>
+                {props.message === null ? "" : props.message.map((value) =>
                     <Message key={value.messageId} userName={value.email} time={value.time} content={value.content}/>
                 )}
             </Grid>
