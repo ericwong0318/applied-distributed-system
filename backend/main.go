@@ -286,7 +286,27 @@ func ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, "Email sent")
 }
 
-func ChangeChannel(c *gin.Context) {
+func ReadUser(c *gin.Context) {
+	// Bind user
+	var user models.User
+	if c.ShouldBind(&user) != nil {
+		c.JSON(http.StatusUnauthorized, "Have not login")
+		return
+	}
+
+	// Select user in the database
+	coll := Client.Database("account").Collection("users")
+	var result models.User
+	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+	if err != nil {
+		panic(err)
+	}
+
+	// Response JSON
+	c.JSON(http.StatusOK, result)
+}
+
+func ReadMessages(c *gin.Context) {
 	// Parse JSON
 	var requestJson struct {
 		Email     string
