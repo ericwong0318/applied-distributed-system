@@ -39,11 +39,6 @@ export default function ClippedDrawer() {
     }, []);
 
     useEffect(() => {
-        // if websocket is changed
-        // if (url !== ws.url) {
-        //     setWs(new WebSocket(url));
-        // }
-
         // WebSocket receive messages
         ws.onmessage = function (msg) {
             let data = msg.data.split(";");
@@ -60,13 +55,26 @@ export default function ClippedDrawer() {
         }
     }, [messages, ws])
 
-    // placeholder for sidebar
-    let chatList: { channelId: number, name: string, type: "personal" | "group" }[] = [
-        {channelId: 0, name: "Friend 1", type: "personal"},
-        {channelId: 1, name: "Friend 2", type: "personal"},
-        {channelId: 2, name: "Group 1", type: "group"},
-        {channelId: 3, name: "Group 2", type: "group"},
-    ];
+    // Read user
+    useEffect(() => {
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/read-user`, {
+            method: "POST",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({email: localStorage.getItem('email')})
+        }).then((response) => response.json()
+        ).then((result) => {
+            let newChannels: ChannelInterface[] = result.channelId.map((channelId: number) => {
+                let channel: ChannelInterface = {
+                    channelId: channelId,
+                    channelName: "Channel " + channelId,
+                    wiki: "No Wiki content"
+                };
+                return channel;
+            })
+            setChannels(newChannels);
+            return;
+        })
+    }, [])
 
     const handleChangeChannel = (newChannelId: number) => {
         setChannelId(newChannelId);
