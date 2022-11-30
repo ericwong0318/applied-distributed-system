@@ -21,7 +21,7 @@ export function FixedAppBar(props: { zIndex: (theme: any) => number }) {
         <AppBar position="fixed" sx={{zIndex: props.zIndex}}>
             <Toolbar>
                 <Typography variant="h6" noWrap component="div">
-                    Chat
+                    {localStorage.getItem("email")} Chat
                 </Typography>
                 {" "}
                 <Box sx={{justifyContent: 'flex-end'}}>
