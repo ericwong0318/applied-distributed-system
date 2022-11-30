@@ -76,7 +76,9 @@ func main() {
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
-	r.POST("/change-channel", ChangeChannel)
+	r.POST("/create-channel", CreateChannel)
+	r.POST("/read-messages", ReadMessages)
+	r.POST("/read-user", ReadUser)
 
 	// WebSocket
 	r.GET("/channel/:name/ws", func(c *gin.Context) {
@@ -119,20 +121,34 @@ func main() {
 	}
 }
 
-//func getDBClient(uri string) (*mongo.Client, context.Context) {
-//	// Connect database
-//	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
-//	clientOptions := options.Client().
-//		ApplyURI(uri).
-//		SetServerAPIOptions(serverAPIOptions)
-//	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//	defer cancel()
-//	client, err := mongo.Connect(ctx, clientOptions)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	return client, ctx
-//}
+func CreateChannel(c *gin.Context) {
+	// Bind requests
+	var channel models.Channel
+	if c.ShouldBind(&channel) != nil {
+		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
+		return
+	}
+
+	// Generate channelId
+	channel.ChannelId = rand.Intn(1000000)
+
+	// Insert channel into database
+
+	coll := Client.Database("account").Collection("channels")
+	result, err := coll.InsertOne(
+		context.TODO(),
+		channel,
+	)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
+		return
+	} else {
+		log.Println(result)
+	}
+
+	// Response JSON
+	c.JSON(http.StatusForbidden, "Created a new channel with ID:"+strconv.Itoa(channel.ChannelId)+",Name:"+channel.ChannelName)
+}
 
 // User services
 
