@@ -96,7 +96,7 @@ func main() {
 		if err != nil {
 			panic("String to int fails")
 		}
-		message := models.Message{MessageId: messageData[3], Email: messageData[0], Time: messageData[1],
+		message := models.Message{MessageId: messageData[3], Email: messageData[0], Time: time.Now().Unix(),
 			Content: messageData[2], ChannelId: channelId}
 		fmt.Println(message)
 		_, err = coll.InsertOne(context.TODO(), message)
@@ -309,7 +309,6 @@ func ReadUser(c *gin.Context) {
 func ReadMessages(c *gin.Context) {
 	// Parse JSON
 	var requestJson struct {
-		Email     string
 		ChannelId int
 	}
 	if c.Bind(&requestJson) != nil {
@@ -318,7 +317,7 @@ func ReadMessages(c *gin.Context) {
 
 	// Read database
 	coll := Client.Database("account").Collection("messages")
-	cursor, err := coll.Find(context.TODO(), bson.D{{"channelid", requestJson.ChannelId}})
+	cursor, err := coll.Find(context.TODO(), bson.D{{"channelId", requestJson.ChannelId}})
 	if err != nil {
 		panic("Change channel fails")
 	}
@@ -328,5 +327,5 @@ func ReadMessages(c *gin.Context) {
 	if err = cursor.All(context.TODO(), &message); err != nil {
 		panic("Convert cursor to result fails")
 	}
-	c.JSON(http.StatusOK, gin.H{"data": []interface{}{message}})
+	c.JSON(http.StatusOK, message)
 }
