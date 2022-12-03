@@ -7,8 +7,6 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Link from '@mui/material/Link'
 import {useSnackbar} from 'notistack';
 // @ts-ignore
@@ -89,10 +87,6 @@ export default function Login() {
                         type="password"
                         id="password"
                         autoComplete="current-password"
-                    />
-                    <FormControlLabel
-                        control={<Checkbox value="remember" color="primary"/>}
-                        label="Remember me"
                     />
                     <Button
                         type="submit"
