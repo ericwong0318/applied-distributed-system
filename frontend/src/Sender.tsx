@@ -17,7 +17,7 @@ export default function Sender(prop: { ws: WebSocket }) {
 
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
-        prop.ws.send(localStorage.getItem("email") + ";" + new Date().toLocaleString() + ";" + textFieldValue
+        prop.ws.send(localStorage.getItem("email") + ";" + Date.now() / 1000 + ";" + textFieldValue
             + ";" + uuidv4() + ";" + localStorage.getItem("channelId")); // Send data using websocket
         setTextFieldValue(""); // Clean input
     }
