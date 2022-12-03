@@ -2,17 +2,12 @@ package main
 
 import (
 	"backend/controllers"
-	"backend/models"
+	"backend/routes"
 	"context"
-	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
 	"github.com/spf13/viper"
 	"log"
-	"net/http"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -39,8 +34,6 @@ func main() {
 	// Get HMAC secrete
 	controllers.HmacSecret = []byte(viper.GetString("server.hmac-secrete"))
 
-	// Routes
-
 	r := gin.Default()
 
 	// CORS configuration
@@ -56,59 +49,11 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Melody
-	m := melody.New()
-
-	// Authentications
-	r.POST("/register", controllers.Register)
-	r.POST("/login", controllers.Login)
-	r.POST("/reset-password", controllers.ResetPassword)
-	r.POST("/check-jwt", controllers.CheckJwt)
-
-	// Create
-	r.POST("/create-channel", controllers.CreateChannel)
-
-	// Read
-	r.POST("/read-messages", controllers.ReadMessages)
-	r.POST("/read-user", controllers.ReadUser)
-
-	// Update
-	r.POST("/join-channel", controllers.JoinChannel)
-
-	// Delete
+	// Routes
+	routes.HandleRoutes(r)
 
 	// WebSocket
-	r.GET("/channel/:name/ws", func(c *gin.Context) {
-		err := m.HandleRequest(c.Writer, c.Request)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, "WebSocket fails")
-		}
-	})
-
-	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		// Store message into database
-		messageData := strings.Split(string(msg), ";")
-		coll := controllers.Client.Database("account").Collection("messages")
-		channelId, err := strconv.Atoi(messageData[4])
-		if err != nil {
-			panic("String to int fails")
-		}
-		message := models.Message{MessageId: messageData[3], Email: messageData[0], Time: time.Now().Unix(),
-			Content: messageData[2], ChannelId: channelId}
-		fmt.Println(message)
-		_, err = coll.InsertOne(context.TODO(), message)
-		if err != nil {
-			panic("Insert fails")
-		}
-
-		// Handle broadcast
-		err = m.BroadcastFilter(msg, func(q *melody.Session) bool {
-			return q.Request.URL.Path == s.Request.URL.Path
-		})
-		if err != nil {
-			panic("Broadcast fails")
-		}
-	})
+	routes.HandleWebSocket(r)
 
 	// Listened port
 	listenedAddress := viper.GetString("server.host") + ":" + viper.GetString("server.port")
@@ -117,5 +62,3 @@ func main() {
 		return
 	}
 }
-
-// User services
