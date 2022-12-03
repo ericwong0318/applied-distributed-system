@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"strconv"
+	"time"
 )
 
 var (
@@ -166,6 +167,7 @@ func CreateChannel(c *gin.Context) {
 	}
 
 	// Generate channelId
+	rand.Seed(time.Now().UnixNano())
 	channel.ChannelId = rand.Intn(1000000)
 
 	// Insert channel into database
