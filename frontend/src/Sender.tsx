@@ -6,17 +6,12 @@ import Grid from "@mui/material/Unstable_Grid2";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
 import {v4 as uuidv4} from 'uuid';
-
-interface TextFieldEvent {
-    target: {
-        value: string
-    }
-}
+import {TextFieldEventInterface} from "./Interfaces";
 
 export default function Sender(prop: { ws: WebSocket }) {
     const [textFieldValue, setTextFieldValue] = useState("");
 
-    function handleChange(event: TextFieldEvent) {
+    function handleChange(event: TextFieldEventInterface) {
         setTextFieldValue(event.target.value);
     }
 

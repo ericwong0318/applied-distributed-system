@@ -17,3 +17,9 @@ export interface ChannelInterface {
     channelName: string,
     wiki: string
 }
+
+export interface TextFieldEventInterface {
+    target: {
+        value: string
+    }
+}
