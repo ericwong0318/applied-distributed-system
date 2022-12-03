@@ -73,6 +73,8 @@ export default function ClippedDrawer() {
 
     const handleChangeChannel = (newChannelId: number) => {
         setChannelId(newChannelId);
+        localStorage.setItem("channelId", String(newChannelId));
+
         // change websocket connection
         setWs(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
             + "/" + newChannelId + "/ws"));
