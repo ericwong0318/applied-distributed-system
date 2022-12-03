@@ -15,15 +15,13 @@ import {ListItemIcon} from "@mui/material";
 import {ChannelInterface, MessageInterface} from "./Interfaces";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Unstable_Grid2";
-import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
-import SendIcon from "@mui/icons-material/Send";
+import FormDialog from "./FormDialog";
 
 export default function ClippedDrawer() {
     const [drawerWidth, setDrawerWidth] = React.useState(400)
     const [messages, setMessages] = useState<MessageInterface[]>([]);
     const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
-        process.env.REACT_APP_PORT + "/channel" + "/0" + "/ws"));
+        process.env.REACT_APP_PORT + "/channel/0/ws"));
     const [channelId, setChannelId] = useState(-1);
     const [channels, setChannels] = useState<ChannelInterface[]>([])
 
@@ -42,22 +40,24 @@ export default function ClippedDrawer() {
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
+    // WebSocket receive messages
     useEffect(() => {
-        // WebSocket receive messages
         ws.onmessage = function (msg) {
             let data = msg.data.split(";");
+            console.log(data);
+            console.log(messages);
             let NewMessage: MessageInterface[] = messages.concat([{
                 messageId: data[3],
                 email: data[0],
                 // @ts-ignore
-                channelId: parseInt(localStorage.getItem("channelId")),
-                time: data[1],
+                channelId: parseInt(channelId),
+                time: parseInt(data[1]),
                 content: data[2]
             }]);
             console.log(NewMessage);
             setMessages(NewMessage);
         }
-    }, [messages, ws])
+    }, [channelId, messages, ws])
 
     // Read user
     useEffect(() => {
@@ -85,11 +85,8 @@ export default function ClippedDrawer() {
         // change websocket connection
         setWs(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
             + "/" + newChannelId + "/ws"));
-        localStorage.setItem('channelId', String(newChannelId));
 
         // Send channelId to backend
-        console.log(localStorage.getItem('email'));
-        console.log(newChannelId);
         fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/read-messages`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
@@ -122,25 +119,7 @@ export default function ClippedDrawer() {
                     <Grid container spacing={1}>
                         <Grid xs={15}>
                             <br/>
-                            <TextField
-                                id="text-field"
-                                label="New channel Id"
-                                placeholder="Happy chatting"
-                                // value={textFieldValue}
-                                // onChange={handleChange}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        // handleSubmit(e)
-                                    }
-                                }}
-                            />
-                        </Grid>
-                        <Grid>
-                            <IconButton size="small"
-                                // onClick={handleSubmit}
-                            >
-                                <SendIcon/>
-                            </IconButton>
+                            <FormDialog/>
                         </Grid>
                     </Grid>
                     {typeof channels === "undefined" ?
