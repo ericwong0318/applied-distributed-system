@@ -4,6 +4,7 @@ import (
 	"backend/controllers"
 	"backend/models"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -338,4 +339,75 @@ func ReadMessages(c *gin.Context) {
 		panic("Convert cursor to result fails")
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func JoinChannel(c *gin.Context) {
+	// Parse JSON
+	var requestJson struct {
+		Email     string `form:"email" bson:"email" json:"email"`
+		ChannelId int    `form:"channelId" bson:"channelId" json:"channelId"`
+	}
+	if err := c.ShouldBind(&requestJson); err != nil {
+		panic(err)
+	}
+
+	// User join the channel
+	resultChannel, err := UserJoinChannel(requestJson)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Response JSON
+	c.JSON(http.StatusOK, "User joined channel "+resultChannel.ChannelName)
+}
+
+func UserJoinChannel(inputStruct struct {
+	Email     string `form:"email" bson:"email" json:"email"`
+	ChannelId int    `form:"channelId" bson:"channelId" json:"channelId"`
+}) (models.Channel, error) {
+	// Check the existence of the channel with the channelId
+	resultChannel, err := FindChannelId(inputStruct.ChannelId)
+	if err != nil {
+		return models.Channel{}, err
+	}
+
+	// Update channelId into user
+	coll := Client.Database("account").Collection("users")
+	result, err := coll.UpdateOne(
+		context.TODO(),
+		bson.D{{"email", inputStruct.Email}},
+		bson.D{{"$addToSet", bson.D{{"channelId", inputStruct.ChannelId}}}},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		panic(err)
+	}
+	if result.MatchedCount != 0 {
+		fmt.Println("matched and replaced an existing document")
+	}
+	if result.UpsertedCount != 0 {
+		fmt.Printf("inserted a new document with ID %v\n", result.UpsertedID)
+	}
+	if result.ModifiedCount == 0 {
+		fmt.Println("user already join this channel")
+		return resultChannel, errors.New("insert fails: user has joined this channel")
+	}
+	log.Println(result)
+	return resultChannel, err
+}
+
+func FindChannelId(channelId int) (models.Channel, error) {
+	coll := Client.Database("account").Collection("channels")
+	var resultChannel models.Channel
+	err := coll.FindOne(
+		context.TODO(),
+		bson.D{{"channelId", channelId}},
+	).Decode(&resultChannel)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			log.Println(err)
+		}
+		return models.Channel{}, err
+	}
+	return resultChannel, err
 }
