@@ -76,9 +76,18 @@ func main() {
 	r.POST("/login", Login)
 	r.POST("/reset-password", ResetPassword)
 	r.POST("/check-jwt", CheckJwt)
+
+	// Create
 	r.POST("/create-channel", CreateChannel)
+
+	// Read
 	r.POST("/read-messages", ReadMessages)
 	r.POST("/read-user", ReadUser)
+
+	// Update
+	r.POST("/join-channel", JoinChannel)
+
+	// Delete
 
 	// WebSocket
 	r.GET("/channel/:name/ws", func(c *gin.Context) {
@@ -119,35 +128,6 @@ func main() {
 		log.Fatalln("Main function failed")
 		return
 	}
-}
-
-func CreateChannel(c *gin.Context) {
-	// Bind requests
-	var channel models.Channel
-	if c.ShouldBind(&channel) != nil {
-		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
-		return
-	}
-
-	// Generate channelId
-	channel.ChannelId = rand.Intn(1000000)
-
-	// Insert channel into database
-
-	coll := Client.Database("account").Collection("channels")
-	result, err := coll.InsertOne(
-		context.TODO(),
-		channel,
-	)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
-		return
-	} else {
-		log.Println(result)
-	}
-
-	// Response JSON
-	c.JSON(http.StatusForbidden, "Created a new channel with ID:"+strconv.Itoa(channel.ChannelId)+",Name:"+channel.ChannelName)
 }
 
 // User services
@@ -284,6 +264,36 @@ func ResetPassword(c *gin.Context) {
 		log.Fatal(err)
 	}
 	c.JSON(http.StatusOK, "Email sent")
+}
+
+func CreateChannel(c *gin.Context) {
+	// Bind requests
+	var channel models.Channel
+	if c.ShouldBind(&channel) != nil {
+		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
+		return
+	}
+
+	// Generate channelId
+	channel.ChannelId = rand.Intn(1000000)
+
+	// Insert channel into database
+	coll := Client.Database("account").Collection("channels")
+	result, err := coll.InsertOne(
+		context.TODO(),
+		channel,
+	)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
+		return
+	}
+	log.Println(result)
+
+	// The user will join the channel that he just created.
+
+	// Response JSON
+	c.JSON(http.StatusOK, "Created a new channel with ID:"+strconv.Itoa(channel.ChannelId)+
+		", Name:"+channel.ChannelName)
 }
 
 func ReadUser(c *gin.Context) {
