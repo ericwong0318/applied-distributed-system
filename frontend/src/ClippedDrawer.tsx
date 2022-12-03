@@ -43,17 +43,8 @@ export default function ClippedDrawer() {
     // WebSocket receive messages
     useEffect(() => {
         ws.onmessage = function (msg) {
-            let data = msg.data.split(";");
-            console.log(data);
             console.log(messages);
-            let NewMessage: MessageInterface[] = messages.concat([{
-                messageId: data[3],
-                email: data[0],
-                // @ts-ignore
-                channelId: parseInt(channelId),
-                time: parseInt(data[1]),
-                content: data[2]
-            }]);
+            let NewMessage: MessageInterface[] = messages.concat([JSON.parse(msg.data)]);
             console.log(NewMessage);
             setMessages(NewMessage);
         }

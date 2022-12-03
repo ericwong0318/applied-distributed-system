@@ -6,7 +6,7 @@ import Grid from "@mui/material/Unstable_Grid2";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
 import {v4 as uuidv4} from 'uuid';
-import {TextFieldEventInterface} from "./Interfaces";
+import {MessageInterface, TextFieldEventInterface} from "./Interfaces";
 
 export default function Sender(prop: { ws: WebSocket }) {
     const [textFieldValue, setTextFieldValue] = useState("");
@@ -17,8 +17,17 @@ export default function Sender(prop: { ws: WebSocket }) {
 
     function handleSubmit(e: { preventDefault: () => void; }) {
         e.preventDefault();
-        prop.ws.send(localStorage.getItem("email") + ";" + Date.now() / 1000 + ";" + textFieldValue
-            + ";" + uuidv4() + ";" + localStorage.getItem("channelId")); // Send data using websocket
+
+        // Build message by interface
+        let message: MessageInterface = {
+            messageId: uuidv4(),
+            email: localStorage.getItem("email")!,
+            channelId: parseInt(localStorage.getItem("channelId")!),
+            time: Math.floor(Date.now() / 1000),
+            content: textFieldValue
+        }
+
+        prop.ws.send(JSON.stringify(message)); // Send message
         setTextFieldValue(""); // Clean input
     }
 
