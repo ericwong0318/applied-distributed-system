@@ -11,19 +11,24 @@ import {useSnackbar} from "notistack";
 
 export default function FormDialog() {
     const {enqueueSnackbar} = useSnackbar();
-    const [open, setOpen] = React.useState(false);
-    const [channelName, setChannelName] = React.useState("New channel Name")
 
-    const handleClickOpen = () => {
-        setOpen(true);
+    // Create form
+    const [createFormOpen, setCreateFormOpen] = React.useState(false);
+    const [channelName, setChannelName] = React.useState("New channel Name");
+
+    // Join form
+    const [joinFormOpen, setJoinFormOpen] = React.useState(false);
+    const [channelId, setChannelId] = React.useState(-1);
+
+    // Create form handlers
+    const handleCreateFormClickOpen = () => {
+        setCreateFormOpen(true);
     };
-
-    const handleClose = () => {
-        setOpen(false);
+    const handleCreateFormClose = () => {
+        setCreateFormOpen(false);
     };
-
     const handleCreateChannels = () => {
-        handleClose();
+        handleCreateFormClose();
 
         // Create a new channel
         fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/create-channel`, {
@@ -38,12 +43,42 @@ export default function FormDialog() {
             .catch((err) => console.error(err));
     }
 
+    // Join form handlers
+    const handleJoinFormClickOpen = () => {
+        setJoinFormOpen(true);
+    };
+    const handleJoinFormClose = () => {
+        setJoinFormOpen(false);
+    };
+    const handleJoinChannels = () => {
+        handleJoinFormClose();
+
+        // Join a channel
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/join-channel`, {
+            method: "POST",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({channelId: channelId, email: localStorage.getItem('email')})
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                enqueueSnackbar(result);
+                window.location.reload();
+            })
+            .catch((err) => console.error(err));
+    }
+
     return (
         <div>
-            <Button variant="outlined" onClick={handleClickOpen}>
-                Create a channel
+            <Button variant="outlined" onClick={handleCreateFormClickOpen}>
+                Create
             </Button>
-            <Dialog open={open} onClose={handleClose}>
+            {" "}
+            <Button variant="outlined" onClick={handleJoinFormClickOpen}>
+                Join
+            </Button>
+
+            {/*create form*/}
+            <Dialog open={createFormOpen} onClose={handleCreateFormClose}>
                 <DialogTitle>Create a channel</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
@@ -58,13 +93,39 @@ export default function FormDialog() {
                         fullWidth
                         variant="standard"
                         onChange={(event: TextFieldEventInterface) => {
-                            setChannelName(event.target.value)
+                            setChannelName(event.target.value);
                         }}
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
+                    <Button onClick={handleCreateFormClose}>Cancel</Button>
                     <Button onClick={handleCreateChannels}>Create</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/*join form*/}
+            <Dialog open={joinFormOpen} onClose={handleJoinFormClose}>
+                <DialogTitle>Join a channel</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter valid channel ID
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="channelId"
+                        label="Channel ID"
+                        type="number"
+                        fullWidth
+                        variant="standard"
+                        onChange={(event: TextFieldEventInterface) => {
+                            setChannelId(parseInt(event.target.value));
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleJoinFormClose}>Cancel</Button>
+                    <Button onClick={handleJoinChannels}>Join</Button>
                 </DialogActions>
             </Dialog>
         </div>
