@@ -326,3 +326,11 @@ func FindChannelId(channelId int) (models.Channel, error) {
 	}
 	return resultChannel, err
 }
+
+func DeleteUserInChannel(email string, channelId int) error {
+	coll := Client.Database("account").Collection("users")
+	filter := bson.D{{"email", email}}
+	update := bson.D{{"$pull", bson.D{{"channelId", channelId}}}}
+	_, err := coll.UpdateOne(context.TODO(), filter, update)
+	return err
+}
