@@ -24,6 +24,8 @@ func HandleRoutes(r *gin.Engine) {
 	r.POST("/join-channel", controllers.JoinChannel)
 
 	// Delete
+	r.POST("/exit-channel", controllers.ExitChannel)
+	r.POST("/delete-channel", controllers.DeleteChannel)
 }
 
 func HandleWebSocket(r *gin.Engine) {
