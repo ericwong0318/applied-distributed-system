@@ -197,16 +197,23 @@ func ReadUser(c *gin.Context) {
 		return
 	}
 
-	// Select user in the database
+	// Select the user and the channels in the database
 	coll := Client.Database("account").Collection("users")
-	var result models.User
-	err := coll.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+	matchStage := bson.D{{"$match", bson.D{{"email", user.Email}}}}
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", "channels"},
+		{"localField", "channelId"}, {"foreignField", "channelId"},
+		{"as", "channelResults"}}}}
+	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$channelResults"},
+		{"preserveNullAndEmptyArrays", false}}}}
+	showLoadedCursor, err := coll.Aggregate(context.TODO(), mongo.Pipeline{matchStage, lookupStage, unwindStage})
 	if err != nil {
 		panic(err)
 	}
-
-	// Response JSON
-	c.JSON(http.StatusOK, result)
+	var showsLoaded []bson.M
+	if err = showLoadedCursor.All(context.TODO(), &showsLoaded); err != nil {
+		panic(err)
+	}
+	c.JSON(http.StatusOK, showsLoaded)
 }
 
 func ReadMessages(c *gin.Context) {
