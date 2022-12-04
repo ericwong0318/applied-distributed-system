@@ -283,8 +283,6 @@ func JoinChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, "User joined channel "+resultChannel.ChannelName)
 }
 
-// Delete
-
 func ExitChannel(c *gin.Context) {
 	// parse JSON request to struct
 	var request struct {
@@ -304,6 +302,8 @@ func ExitChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, "User exit the channel with ID: "+strconv.Itoa(request.ChannelId))
 }
 
+// Delete
+
 func DeleteChannel(c *gin.Context) {
 	// parse JSON request to struct
 	var request struct {
@@ -317,7 +317,7 @@ func DeleteChannel(c *gin.Context) {
 	// Find users in the channel
 	users, err := ReadUserInChannel(request.ChannelId)
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	// User exit the channel
@@ -326,5 +326,10 @@ func DeleteChannel(c *gin.Context) {
 			panic(err)
 		}
 	}
+
+	if err := HandleDeleteChannel(request.ChannelId); err != nil {
+		panic(err)
+	}
+
 	c.JSON(http.StatusOK, "User delete the channel with ID: "+strconv.Itoa(request.ChannelId))
 }

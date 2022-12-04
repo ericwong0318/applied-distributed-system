@@ -38,7 +38,6 @@ func ReadUserInChannel(chanelId int) ([]models.User, error) {
 	}
 
 	// Get a list of all returned documents and print them out.
-	// See the mongo.Cursor documentation for more examples of using cursors.
 	var users []models.User
 	if err = cursor.All(context.TODO(), &users); err != nil {
 		log.Fatal(err)
@@ -91,5 +90,14 @@ func RemoveUserInChannel(email string, channelId int) error {
 	filter := bson.D{{"email", email}}
 	update := bson.D{{"$pull", bson.D{{"channelId", channelId}}}}
 	_, err := coll.UpdateOne(context.TODO(), filter, update)
+	return err
+}
+
+// Delete
+
+func HandleDeleteChannel(channelId int) error {
+	coll := Client.Database("account").Collection("channels")
+	deleteResult, err := coll.DeleteOne(context.TODO(), bson.D{{"channelId", channelId}})
+	log.Printf("%+v", deleteResult)
 	return err
 }
