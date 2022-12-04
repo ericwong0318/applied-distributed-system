@@ -39,6 +39,7 @@ export default function FormDialog() {
             .then((response) => response.json())
             .then((result) => {
                 enqueueSnackbar(result);
+                window.location.reload();
             })
             .catch((err) => console.error(err));
     }
