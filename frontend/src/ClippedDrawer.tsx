@@ -56,19 +56,21 @@ export default function ClippedDrawer() {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({email: localStorage.getItem('email')})
-        }).then((response) => response.json()
-        ).then((result) => {
-            let newChannels: ChannelInterface[] = result.channelId.map((channelId: number) => {
-                let channel: ChannelInterface = {
-                    channelId: channelId,
-                    channelName: "Channel " + channelId,
-                    wiki: "No Wiki content"
-                };
-                return channel;
-            })
-            setChannels(newChannels);
-            return;
         })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log(result)
+                let newChannels: ChannelInterface[] = result.map((elem: any) => {
+                    let channel: ChannelInterface = {
+                        channelId: elem.channelResults.channelId,
+                        channelName: elem.channelResults.channelName,
+                        wiki: elem.channelResults.wiki
+                    };
+                    return channel;
+                })
+                setChannels(newChannels);
+                return;
+            })
     }, [])
 
     const handleChangeChannel = (newChannelId: number) => {
@@ -127,7 +129,7 @@ export default function ClippedDrawer() {
                                         <ListItemIcon>
                                             <ChatBubbleIcon fontSize={"small"}/>
                                         </ListItemIcon>
-                                        <ListItemText primary={c.channelId.toString()}/>
+                                        <ListItemText primary={c.channelName} secondary={"ID: " + c.channelId}/>
                                     </ListItemButton>
                                 </ListItem>
                             ))}

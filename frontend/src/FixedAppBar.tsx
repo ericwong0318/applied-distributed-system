@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Cookies from 'js-cookie';
 import {useNavigate} from "react-router-dom";
+import Grid from "@mui/material/Grid";
 
 export function FixedAppBar(props: { zIndex: (theme: any) => number }) {
     const navigate = useNavigate();
@@ -20,13 +21,18 @@ export function FixedAppBar(props: { zIndex: (theme: any) => number }) {
         {/*appbar*/}
         <AppBar position="fixed" sx={{zIndex: props.zIndex}}>
             <Toolbar>
-                <Typography variant="h6" noWrap component="div">
-                    {localStorage.getItem("email")}'s Chat
-                </Typography>
-                {" "}
-                <Box sx={{justifyContent: 'flex-end'}}>
-                    <Button color="inherit" onClick={handleLogout}>Logout</Button>
-                </Box>
+                <Grid container spacing={2}>
+                    <Grid item xs={11}>
+                        <Typography variant="h6" noWrap component="div">
+                            {localStorage.getItem("email")}'s Chat
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={1}>
+                        <Box sx={{justifyContent: 'flex-end'}}>
+                            <Button color="inherit" onClick={handleLogout}>Logout</Button>
+                        </Box>
+                    </Grid>
+                </Grid>
             </Toolbar>
         </AppBar>
     </>;
