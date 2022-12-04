@@ -160,15 +160,21 @@ func ResetPassword(c *gin.Context) {
 
 func CreateChannel(c *gin.Context) {
 	// Bind requests
-	var channel models.Channel
-	if c.ShouldBind(&channel) != nil {
-		c.JSON(http.StatusBadRequest, "Channel info is incorrect")
+	var requestJson struct {
+		Email       string `form:"email"`
+		ChannelName string `form:"channelName"`
+	}
+	if c.ShouldBind(&requestJson) != nil {
+		c.JSON(http.StatusBadRequest, "Request is incorrect")
 		return
 	}
 
+	var channel models.Channel
+	channel.ChannelName = requestJson.ChannelName
+
 	// Generate channelId
 	rand.Seed(time.Now().UnixNano())
-	channel.ChannelId = rand.Intn(1000000)
+	channel.ChannelId = rand.Intn(100000000) // 8 digit channelId
 
 	// Insert channel into database
 	coll := Client.Database("account").Collection("channels")
@@ -183,6 +189,16 @@ func CreateChannel(c *gin.Context) {
 	log.Println(result)
 
 	// The user will join the channel that he just created.
+	_, err = UserJoinChannel(struct {
+		Email     string `form:"email" bson:"email" json:"email"`
+		ChannelId int    `form:"channelId" bson:"channelId" json:"channelId"`
+	}(struct {
+		Email     string
+		ChannelId int
+	}{Email: requestJson.Email, ChannelId: channel.ChannelId}))
+	if err != nil {
+		return
+	}
 
 	// Response JSON
 	c.JSON(http.StatusOK, "Created a new channel with ID:"+strconv.Itoa(channel.ChannelId)+
