@@ -18,27 +18,12 @@ import Grid from "@mui/material/Unstable_Grid2";
 import FormDialog from "./FormDialog";
 
 export default function ClippedDrawer() {
-    const [drawerWidth, setDrawerWidth] = React.useState(400)
+    const [drawerWidth] = useState(250)
     const [messages, setMessages] = useState<MessageInterface[]>([]);
     const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
         process.env.REACT_APP_PORT + "/channel/0/ws"));
     const [channelId, setChannelId] = useState(-1);
     const [channels, setChannels] = useState<ChannelInterface[]>([])
-
-    // resize drawer width
-    React.useEffect(() => {
-        function updateSize() {
-            if (window.innerWidth >= 1024) {
-                setDrawerWidth(400)
-            } else {
-                setDrawerWidth(window.innerWidth * 0.1)
-            }
-        }
-
-        window.addEventListener('resize', updateSize);
-        updateSize();
-        return () => window.removeEventListener('resize', updateSize);
-    }, []);
 
     // WebSocket receive messages
     useEffect(() => {
