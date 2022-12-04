@@ -3,7 +3,6 @@ package controllers
 import (
 	"backend/models"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -193,7 +192,7 @@ func CreateChannel(c *gin.Context) {
 	log.Println(result)
 
 	// The user will join the channel that he just created.
-	_, err = UserJoinChannel(struct {
+	_, err = InsertUserInChannel(struct {
 		Email     string `form:"email" bson:"email" json:"email"`
 		ChannelId int    `form:"channelId" bson:"channelId" json:"channelId"`
 	}(struct {
@@ -275,7 +274,7 @@ func JoinChannel(c *gin.Context) {
 	}
 
 	// User join the channel
-	resultChannel, err := UserJoinChannel(requestJson)
+	resultChannel, err := InsertUserInChannel(requestJson)
 	if err != nil {
 		log.Println(err)
 	}
@@ -297,7 +296,7 @@ func ExitChannel(c *gin.Context) {
 	}
 
 	// User exit the channel
-	if err := DeleteUserInChannel(request.Email, request.ChannelId); err != nil {
+	if err := RemoveUserInChannel(request.Email, request.ChannelId); err != nil {
 		c.JSON(http.StatusInternalServerError, "Remove User from channel fails")
 	}
 
@@ -316,97 +315,16 @@ func DeleteChannel(c *gin.Context) {
 	}
 
 	// Find users in the channel
-	users, err := FindUserInChannel(request.ChannelId)
+	users, err := ReadUserInChannel(request.ChannelId)
 	if err != nil {
 		return
 	}
 
 	// User exit the channel
 	for _, user := range users {
-		if err := DeleteUserInChannel(user.Email, request.ChannelId); err != nil {
+		if err := RemoveUserInChannel(user.Email, request.ChannelId); err != nil {
 			panic(err)
 		}
 	}
 	c.JSON(http.StatusOK, "User delete the channel with ID: "+strconv.Itoa(request.ChannelId))
-}
-
-// Handlers
-
-func UserJoinChannel(inputStruct struct {
-	Email     string `form:"email" bson:"email" json:"email"`
-	ChannelId int    `form:"channelId" bson:"channelId" json:"channelId"`
-}) (models.Channel, error) {
-	// Check the existence of the channel with the channelId
-	resultChannel, err := FindChannelId(inputStruct.ChannelId)
-	if err != nil {
-		return models.Channel{}, err
-	}
-
-	// Update channelId into user
-	coll := Client.Database("account").Collection("users")
-	result, err := coll.UpdateOne(
-		context.TODO(),
-		bson.D{{"email", inputStruct.Email}},
-		bson.D{{"$addToSet", bson.D{{"channelId", inputStruct.ChannelId}}}},
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		panic(err)
-	}
-	if result.MatchedCount != 0 {
-		fmt.Println("matched and replaced an existing document")
-	}
-	if result.UpsertedCount != 0 {
-		fmt.Printf("inserted a new document with ID %v\n", result.UpsertedID)
-	}
-	if result.ModifiedCount == 0 {
-		fmt.Println("user already join this channel")
-		return resultChannel, errors.New("insert fails: user has joined this channel")
-	}
-	log.Println(result)
-	return resultChannel, err
-}
-
-func FindChannelId(channelId int) (models.Channel, error) {
-	coll := Client.Database("account").Collection("channels")
-	var resultChannel models.Channel
-	err := coll.FindOne(
-		context.TODO(),
-		bson.D{{"channelId", channelId}},
-	).Decode(&resultChannel)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			log.Println(err)
-		}
-		return models.Channel{}, err
-	}
-	return resultChannel, err
-}
-
-func DeleteUserInChannel(email string, channelId int) error {
-	coll := Client.Database("account").Collection("users")
-	filter := bson.D{{"email", email}}
-	update := bson.D{{"$pull", bson.D{{"channelId", channelId}}}}
-	_, err := coll.UpdateOne(context.TODO(), filter, update)
-	return err
-}
-
-func FindUserInChannel(chanelId int) ([]models.User, error) {
-	coll := Client.Database("account").Collection("users")
-	// Find all documents in which the "name" field is "Bob".
-	cursor, err := coll.Find(context.TODO(), bson.D{{"channelId", chanelId}})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get a list of all returned documents and print them out.
-	// See the mongo.Cursor documentation for more examples of using cursors.
-	var users []models.User
-	if err = cursor.All(context.TODO(), &users); err != nil {
-		log.Fatal(err)
-	}
-	for _, result := range users {
-		fmt.Println(result)
-	}
-	return users, nil
 }
