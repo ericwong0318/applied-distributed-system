@@ -24,6 +24,8 @@ var (
 	HmacSecret []byte
 )
 
+// Authentication
+
 func Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBind(&user); err != nil {
@@ -158,6 +160,8 @@ func ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, "Email sent")
 }
 
+// Create
+
 func CreateChannel(c *gin.Context) {
 	// Bind requests
 	var requestJson struct {
@@ -204,6 +208,8 @@ func CreateChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, "Created a new channel with ID:"+strconv.Itoa(channel.ChannelId)+
 		", Name:"+channel.ChannelName)
 }
+
+// Read
 
 func ReadUser(c *gin.Context) {
 	// Bind user
@@ -255,6 +261,8 @@ func ReadMessages(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, message)
 }
+
+// Update
 
 func JoinChannel(c *gin.Context) {
 	// Parse JSON
