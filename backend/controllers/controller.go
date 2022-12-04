@@ -298,6 +298,17 @@ func ExitChannel(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, "Remove User from channel fails")
 	}
 
+	// If the channel has no users, delete it
+	users, err := ReadUserInChannel(request.ChannelId)
+	if err != nil {
+		panic(err)
+	}
+	if len(users) == 0 {
+		if err := HandleDeleteChannel(request.ChannelId); err != nil {
+			panic(err)
+		}
+	}
+
 	// Response
 	c.JSON(http.StatusOK, "User exit the channel with ID: "+strconv.Itoa(request.ChannelId))
 }
