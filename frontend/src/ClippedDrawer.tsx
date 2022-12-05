@@ -9,21 +9,24 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import {MainContent} from "./MainContent";
 import {FixedAppBar} from "./FixedAppBar";
 import {ListItemIcon} from "@mui/material";
 import {ChannelInterface, MessageInterface} from "./Interfaces";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Unstable_Grid2";
 import FormDialog from "./FormDialog";
+import Button from "@mui/material/Button";
+import {MainContent} from "./MainContent";
+import {useSnackbar} from "notistack";
 
 export default function ClippedDrawer() {
-    const [drawerWidth] = useState(250)
+    const [drawerWidth] = useState(300)
     const [messages, setMessages] = useState<MessageInterface[]>([]);
     const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
         process.env.REACT_APP_PORT + "/channel/0/ws"));
     const [channelId, setChannelId] = useState(-1);
     const [channels, setChannels] = useState<ChannelInterface[]>([])
+    const {enqueueSnackbar} = useSnackbar();
 
     // WebSocket receive messages
     useEffect(() => {
@@ -44,7 +47,7 @@ export default function ClippedDrawer() {
         })
             .then((response) => response.json())
             .then((result) => {
-                console.log(result)
+                if (result === null) return;
                 let newChannels: ChannelInterface[] = result.map((elem: any) => {
                     let channel: ChannelInterface = {
                         channelId: elem.channelResults.channelId,
@@ -80,6 +83,42 @@ export default function ClippedDrawer() {
             .catch((err) => console.error(err))
     }
 
+    const handleExitChannel = (channelId: number) => {
+        // Send channelId to backend
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/exit-channel`, {
+            method: "POST",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({
+                email: localStorage.getItem('email'),
+                channelId: channelId
+            })
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                window.location.reload();
+                enqueueSnackbar(result);
+            })
+            .catch((err) => console.error(err))
+    }
+
+    const handleDeleteChannel = (channelId: number) => {
+        // Send channelId to backend
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/delete-channel`, {
+            method: "POST",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({
+                email: localStorage.getItem('email'),
+                channelId: channelId
+            })
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                window.location.reload();
+                enqueueSnackbar(result);
+            })
+            .catch((err) => console.error(err))
+    }
+
     return (
         <Box sx={{display: 'flex'}}>
             {/*top bar*/}
@@ -102,7 +141,7 @@ export default function ClippedDrawer() {
                             <FormDialog/>
                         </Grid>
                     </Grid>
-                    {typeof channels === "undefined" ?
+                    {channels === null ?
                         <Typography variant="body2" align="center" m={10}>
                             You don't have any channels. Please join a channel.
                         </Typography> :
@@ -115,6 +154,14 @@ export default function ClippedDrawer() {
                                             <ChatBubbleIcon fontSize={"small"}/>
                                         </ListItemIcon>
                                         <ListItemText primary={c.channelName} secondary={"ID: " + c.channelId}/>
+                                        <Button color="warning" size="small" variant="outlined"
+                                                onClick={() => handleExitChannel(c.channelId)}>
+                                            Exit
+                                        </Button>
+                                        <Button color="error" size="small" variant="outlined"
+                                                onClick={() => handleDeleteChannel(c.channelId)}>
+                                            Del
+                                        </Button>
                                     </ListItemButton>
                                 </ListItem>
                             ))}
