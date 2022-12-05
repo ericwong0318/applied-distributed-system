@@ -8,6 +8,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import {TextFieldEventInterface} from "./Interfaces";
 import {useSnackbar} from "notistack";
+import Grid from "@mui/material/Grid";
 
 export default function FormDialog() {
     const {enqueueSnackbar} = useSnackbar();
@@ -70,13 +71,18 @@ export default function FormDialog() {
 
     return (
         <div>
-            <Button variant="outlined" onClick={handleCreateFormClickOpen}>
-                Create
-            </Button>
-            {" "}
-            <Button variant="outlined" onClick={handleJoinFormClickOpen}>
-                Join
-            </Button>
+            <Grid container>
+                <Grid item xs={8}>
+                    <Button variant="outlined" onClick={handleCreateFormClickOpen}>
+                        Create
+                    </Button>
+                </Grid>
+                <Grid item xs={4}>
+                    <Button variant="outlined" onClick={handleJoinFormClickOpen}>
+                        Join
+                    </Button>
+                </Grid>
+            </Grid>
 
             {/*create form*/}
             <Dialog open={createFormOpen} onClose={handleCreateFormClose}>
