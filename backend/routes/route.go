@@ -8,6 +8,7 @@ import (
 
 func HandleRoutes(r *gin.Engine) {
 	// Authentications
+	// todo wrong REST API header
 	r.POST("/register", controllers.Register)
 	r.POST("/login", controllers.Login)
 	r.POST("/reset-password", controllers.ResetPassword)
@@ -15,10 +16,12 @@ func HandleRoutes(r *gin.Engine) {
 
 	// Create
 	r.POST("/create-channel", controllers.CreateChannel)
+	r.POST("/create-media", controllers.CreateMedia)
 
 	// Read
 	r.POST("/read-messages", controllers.ReadMessages)
 	r.POST("/read-user", controllers.ReadUser)
+	r.POST("/download-media", controllers.DownloadMedia)
 
 	// Update
 	r.POST("/join-channel", controllers.JoinChannel)

@@ -2,18 +2,23 @@ package controllers
 
 import (
 	"backend/models"
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/smtp"
+	"os"
 	"strconv"
 	"time"
 )
@@ -208,6 +213,37 @@ func CreateChannel(c *gin.Context) {
 		", Name:"+channel.ChannelName)
 }
 
+func CreateMedia(c *gin.Context) {
+	// Bind request
+	var requestJson struct {
+		Email string `form:"email"`
+	}
+	if c.ShouldBind(&requestJson) != nil {
+		c.JSON(http.StatusBadRequest, "Request is incorrect")
+		return
+	}
+
+	file, header, err := c.Request.FormFile("media")
+	filename := header.Filename
+
+	// Use BSON to upload media in GridFS
+	db := Client.Database("account")
+	opts := options.GridFSBucket().SetName("medias")
+	bucket, err := gridfs.NewBucket(db, opts)
+	if err != nil {
+		panic(err)
+	}
+	uploadOpts := options.GridFSUpload().SetMetadata(bson.D{{"email", requestJson.Email}})
+	objectID, err := bucket.UploadFromStream(filename, io.Reader(file), uploadOpts)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("New file uploaded with ID %s", objectID)
+
+	// Response JSON
+	c.JSON(http.StatusOK, "file is uploaded.")
+}
+
 // Read
 
 func ReadUser(c *gin.Context) {
@@ -259,6 +295,70 @@ func ReadMessages(c *gin.Context) {
 		panic("Convert cursor to result fails")
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func DownloadMedia(c *gin.Context) {
+	// Parse JSON
+	var requestJson struct {
+		MediaId string `form:"mediaId" json:"mediaId" bson:"mediaId"`
+	}
+	if c.Bind(&requestJson) != nil {
+		panic("Input is invalid")
+	}
+
+	// Create a bucket
+	db := Client.Database("account")
+	opts := options.GridFSBucket().SetName("medias")
+	bucket, err := gridfs.NewBucket(db, opts)
+	if err != nil {
+		panic(err)
+	}
+
+	// Download media from GridFS
+	fileId, err := primitive.ObjectIDFromHex(requestJson.MediaId)
+	if err != nil {
+		panic(err)
+	}
+	fileBuffer := bytes.NewBuffer(nil)
+	if numberOfBytes, err := bucket.DownloadToStream(fileId, fileBuffer); numberOfBytes == 0 || err != nil {
+		panic(err)
+	}
+
+	// Find file name to determine file name and type
+	filter := bson.D{{"_id", fileId}}
+	cursor, err := bucket.Find(filter)
+	if err != nil {
+		panic(err)
+	}
+	type gridFSFile struct {
+		Name string `bson:"filename"`
+	}
+	var foundFiles []gridFSFile
+	if err = cursor.All(context.TODO(), &foundFiles); err != nil {
+		panic(err)
+	}
+
+	// Create the downloaded file
+	outputFileName := foundFiles[0].Name
+	outputFile, err := os.Create(outputFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Write buffer to output file
+	_, err = outputFile.Write(fileBuffer.Bytes())
+	if err != nil {
+		return
+	}
+
+	// Response
+	c.File(outputFileName)
+
+	// Clean up
+	err = os.Remove(outputFileName)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Update
