@@ -244,7 +244,7 @@ func CreateMedia(c *gin.Context) {
 	fmt.Printf("New file uploaded with ID %s", objectID)
 
 	// Response JSON
-	c.JSON(http.StatusOK, "file is uploaded.")
+	c.JSON(http.StatusOK, objectID)
 }
 
 // Read
