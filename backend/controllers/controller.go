@@ -224,6 +224,9 @@ func CreateMedia(c *gin.Context) {
 	}
 
 	file, header, err := c.Request.FormFile("media")
+	if err != nil {
+		panic(err)
+	}
 	filename := header.Filename
 
 	// Use BSON to upload media in GridFS

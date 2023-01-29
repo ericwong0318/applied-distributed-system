@@ -6,4 +6,5 @@ type Message struct {
 	ChannelId int    `form:"channelId" json:"channelId" bson:"channelId"`
 	Time      int64  `form:"time" json:"time" bson:"time"`
 	Content   string `form:"content" json:"content" bson:"content"`
+	FileId    string `form:"fileId" json:"fileId" bson:"fileId"`
 }
