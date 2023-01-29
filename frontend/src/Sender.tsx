@@ -14,15 +14,7 @@ import useFileUpload from 'react-use-file-upload';
 export default function Sender(prop: { ws: WebSocket }) {
     const [textFieldValue, setTextFieldValue] = useState("");
 
-    const {
-        files,
-        fileNames,
-        handleDragDropEvent,
-        clearAllFiles,
-        createFormData,
-        setFiles,
-        removeFile,
-    } = useFileUpload();
+    const {createFormData} = useFileUpload();
 
     function handleChange(event: TextFieldEventInterface) {
         setTextFieldValue(event.target.value);
@@ -37,7 +29,8 @@ export default function Sender(prop: { ws: WebSocket }) {
             email: localStorage.getItem("email")!,
             channelId: parseInt(localStorage.getItem("channelId")!),
             time: Math.floor(Date.now() / 1000),
-            content: textFieldValue
+            content: textFieldValue,
+            fileId: undefined
         }
 
         // Send media

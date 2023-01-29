@@ -18,7 +18,6 @@ export default function Upload(prop: { ws: WebSocket }) {
         files,
         fileNames,
         handleDragDropEvent,
-        clearAllFiles,
         createFormData,
         setFiles,
         removeFile,
@@ -29,31 +28,36 @@ export default function Upload(prop: { ws: WebSocket }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const formData = createFormData();
-        for (let [i, v] of formData.entries()) {
-            console.log(i)
-            // console.log(v)
-            let message: MessageInterface = {
-                messageId: uuidv4(),
-                email: localStorage.getItem("email")!,
-                channelId: parseInt(localStorage.getItem("channelId")!),
-                time: Math.floor(Date.now() / 1000),
-                content: i
-            }
-            prop.ws.send(JSON.stringify(message));
-        }
+        // postman
+        let formdata = new FormData();
+        formdata.append("media", files.at(0));
+        formdata.append("email", "hixoxa1262@adroh.com");
 
-        // console.log([...formData.entries()]);
+        let requestOptions = {
+            method: 'POST',
+            body: formdata,
+            redirect: 'follow'
+        };
 
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/create-media`, {
-            method: "POST",
-            headers: {'Content-type': 'multipart/form-data'},
-            body: formData
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                console.log(result);
-            });
+        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/create-media`, requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                    const formData = createFormData();
+                    for (let [i] of formData.entries()) {
+                        console.log(i)
+                        let message: MessageInterface = {
+                            messageId: uuidv4(),
+                            email: localStorage.getItem("email")!,
+                            channelId: parseInt(localStorage.getItem("channelId")!),
+                            time: Math.floor(Date.now() / 1000),
+                            content: i,
+                            fileId: result
+                        }
+                        prop.ws.send(JSON.stringify(message));
+                    }
+                }
+            )
+            .catch(error => console.log('error', error));
     };
 
     return (

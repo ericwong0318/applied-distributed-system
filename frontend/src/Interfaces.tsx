@@ -10,6 +10,7 @@ export interface MessageInterface {
     channelId: number,
     time: number,
     content: string
+    fileId: string | undefined
 }
 
 export interface ChannelInterface {
