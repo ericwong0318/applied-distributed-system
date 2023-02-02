@@ -8,14 +8,15 @@ import Sender from "./Sender";
 import {MessageInterface} from "./Interfaces"
 import ReactMarkdown from 'react-markdown'
 import Button from "@mui/material/Button";
+import Diagram from "./Diagram";
 
 function Message(props: { userName: string, time: number, content: string, fileId: string | undefined }) {
+    console.log(props.content);
 
     const handleDownloadMedia = (e: { preventDefault: () => void; }) => {
         e.preventDefault()
         let myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-        console.log("download")
         let urlencoded = new URLSearchParams();
         if (props.fileId !== undefined) {
             urlencoded.append("mediaId", props.fileId);
@@ -47,14 +48,19 @@ function Message(props: { userName: string, time: number, content: string, fileI
         <Typography variant="subtitle1" m={1}><b>{props.userName} at </b>
             {new Date(props.time * 1000).toLocaleString()}
         </Typography>
-        <ReactMarkdown>{props.content}</ReactMarkdown>
-        {props.fileId === "" || props.fileId === undefined ? "" :
-            <Button onClick={handleDownloadMedia}>Download</Button>}
+        <Typography variant="body1" display="inline">
+            {props.content.startsWith("graph", 0) ? <Diagram diagram={props.content}/> : ""}
+            {props.content.startsWith("#", 0) ? <ReactMarkdown>{props.content}</ReactMarkdown> :
+                <p style={{fontFamily: 'inherit'}}>{props.content}</p>}
+            {props.fileId === "" || props.fileId === undefined ? "" :
+                <Button onClick={handleDownloadMedia}>Download</Button>}
+        </Typography>
         <Divider/>
     </Grid>;
 }
 
 export function MainContent(props: { message: MessageInterface[], ws: WebSocket }) {
+    // @ts-ignore
     return <>
         {/*main content*/}
         <Box component="main" sx={{flexGrow: 1, p: 3}}>
