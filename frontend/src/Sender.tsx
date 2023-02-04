@@ -9,7 +9,7 @@ import {v4 as uuidv4} from 'uuid';
 import {MessageInterface, TextFieldEventInterface} from "./Interfaces";
 import Upload from "./Upload";
 import useFileUpload from 'react-use-file-upload';
-
+import SketchBoard from "./SketchBoard";
 
 export default function Sender(prop: { ws: WebSocket }) {
     const [textFieldValue, setTextFieldValue] = useState("");
@@ -58,6 +58,9 @@ export default function Sender(prop: { ws: WebSocket }) {
             }}
         >
             <Grid container spacing={2}>
+                <Grid item xs={12}>
+                    <SketchBoard/>
+                </Grid>
                 <Grid item xs={10}>
                     <TextField
                         id="text-field"
