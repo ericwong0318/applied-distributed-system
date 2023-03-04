@@ -6,6 +6,7 @@ import Register from "./Register";
 import Login from "./Login";
 import Error from "./Error";
 import ResetPassword from "./ResetPassword";
+import {VideoConferencing} from "./VideoConferencing";
 
 export const AuthContext = createContext(undefined);
 
@@ -31,8 +32,14 @@ const router = createBrowserRouter([
 
     // chatting page
     {
-        path: "/chat", // credential
+        path: "/chat",
         element: <ClippedDrawer/>,
+    },
+
+    // video conferencing page
+    {
+        path: "/video-conferencing",
+        element: <VideoConferencing/>,
     },
 ],);
 

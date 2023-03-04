@@ -9,6 +9,7 @@ import {MessageInterface} from "./Interfaces"
 import ReactMarkdown from 'react-markdown'
 import Button from "@mui/material/Button";
 import Diagram from "./Diagram";
+import Link from "@mui/material/Link";
 
 function Message(props: { userName: string, time: number, content: string, fileId: string | undefined }) {
     console.log(props.content);
@@ -74,6 +75,9 @@ export function MainContent(props: { message: MessageInterface[], ws: WebSocket 
             <Box sx={{display: 'flex', alignItems: 'flex-end', p: 1, m: 1,}}>
                 <Sender ws={props.ws}/>
             </Box>
+            <Button variant={"outlined"}>
+                <Link href="/video-conferencing" variant="body2">Video Conferencing</Link>
+            </Button>
         </Box>
     </>
 }
