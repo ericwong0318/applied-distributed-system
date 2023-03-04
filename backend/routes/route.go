@@ -24,7 +24,8 @@ func HandleRoutes(r *gin.Engine) {
 	r.POST("/download-media", controllers.DownloadMedia)
 
 	// Update
-	r.POST("/join-channel", controllers.JoinChannel)
+	r.POST("/join-channel", services.JoinChannel)
+	r.POST("/join-video-conference", services.JoinVideoConference)
 
 	// Delete
 	r.POST("/exit-channel", controllers.ExitChannel)

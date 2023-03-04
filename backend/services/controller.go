@@ -416,6 +416,27 @@ func ExitChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, "User exit the channel with ID: "+strconv.Itoa(request.ChannelId))
 }
 
+func JoinVideoConference(c *gin.Context) {
+	// Parse JSON
+	var request struct {
+		Email     string `form:"email" bson:"email" json:"email"`
+		ChannelId string `form:"channelId" bson:"channelId" json:"channelId"`
+	}
+	if err := c.ShouldBind(&request); err != nil {
+		panic(err)
+	}
+
+	// Get Token to join the corresponding video conference
+	log.Println(request.Email)
+	token, err := getToken(request.ChannelId, request.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+	}
+
+	// Response JSON
+	c.JSON(http.StatusOK, token)
+}
+
 // Delete
 
 func DeleteChannel(c *gin.Context) {
