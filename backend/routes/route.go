@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"backend/controllers"
+	"backend/services"
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
 )
@@ -9,32 +9,32 @@ import (
 func HandleRoutes(r *gin.Engine) {
 	// Authentications
 	// todo wrong REST API header
-	r.POST("/register", controllers.Register)
-	r.POST("/login", controllers.Login)
-	r.POST("/reset-password", controllers.ResetPassword)
-	r.POST("/check-jwt", controllers.CheckJwt)
+	r.POST("/register", services.Register)
+	r.POST("/login", services.Login)
+	r.POST("/reset-password", services.ResetPassword)
+	r.POST("/check-jwt", services.CheckJwt)
 
 	// Create
-	r.POST("/create-channel", controllers.CreateChannel)
-	r.POST("/create-media", controllers.CreateMedia)
+	r.POST("/create-channel", services.CreateChannel)
+	r.POST("/create-media", services.CreateMedia)
 
 	// Read
-	r.POST("/read-messages", controllers.ReadMessages)
-	r.POST("/read-user", controllers.ReadUser)
-	r.POST("/download-media", controllers.DownloadMedia)
+	r.POST("/read-messages", services.ReadMessages)
+	r.POST("/read-user", services.ReadUser)
+	r.POST("/download-media", services.DownloadMedia)
 
 	// Update
 	r.POST("/join-channel", services.JoinChannel)
 	r.POST("/join-video-conference", services.JoinVideoConference)
 
 	// Delete
-	r.POST("/exit-channel", controllers.ExitChannel)
-	r.POST("/delete-channel", controllers.DeleteChannel)
+	r.POST("/exit-channel", services.ExitChannel)
+	r.POST("/delete-channel", services.DeleteChannel)
 }
 
 func HandleWebSocket(r *gin.Engine) {
 	// WebSocket
 	m := melody.New()
-	r.GET("/channel/:name/ws", controllers.WebSocketHandleRequest(m))
-	controllers.WebSocketHandleMessage(m)
+	r.GET("/channel/:name/ws", services.WebSocketHandleRequest(m))
+	services.WebSocketHandleMessage(m)
 }

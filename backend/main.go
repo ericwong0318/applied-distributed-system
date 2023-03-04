@@ -1,8 +1,8 @@
 package main
 
 import (
-	"backend/controllers"
 	"backend/routes"
+	"backend/services"
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,17 +22,17 @@ func main() {
 
 	// Connect database
 	uri := viper.GetString("database.uri")
-	controllers.Client, _ = controllers.GetDBClient(uri)
+	services.Client, _ = services.GetDBClient(uri)
 
 	// Disconnect database
 	defer func() {
-		if err := controllers.Client.Disconnect(context.TODO()); err != nil {
+		if err := services.Client.Disconnect(context.TODO()); err != nil {
 			panic(err)
 		}
 	}()
 
 	// Get HMAC secrete
-	controllers.HmacSecret = []byte(viper.GetString("server.hmac-secrete"))
+	services.HmacSecret = []byte(viper.GetString("server.hmac-secrete"))
 
 	r := gin.Default()
 
