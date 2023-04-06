@@ -22,7 +22,7 @@ import {useSnackbar} from "notistack";
 export default function ClippedDrawer() {
     const [drawerWidth] = useState(300)
     const [messages, setMessages] = useState<MessageInterface[]>([]);
-    const [ws, setWs] = useState(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" +
+    const [ws, setWs] = useState(new WebSocket("wss://" + process.env.REACT_APP_HOSTNAME + ":" +
         process.env.REACT_APP_PORT + "/channel/0/ws"));
     const [channelId, setChannelId] = useState(-1);
     const [channels, setChannels] = useState<ChannelInterface[]>([])
@@ -40,7 +40,7 @@ export default function ClippedDrawer() {
 
     // Read user
     useEffect(() => {
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/read-user`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/read-user`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({email: localStorage.getItem('email')})
@@ -66,11 +66,11 @@ export default function ClippedDrawer() {
         localStorage.setItem("channelId", String(newChannelId));
 
         // change websocket connection
-        setWs(new WebSocket("ws://" + process.env.REACT_APP_HOSTNAME + ":" + process.env.REACT_APP_PORT + "/channel"
+        setWs(new WebSocket("wss://" + process.env.REACT_APP_HOSTNAME + "/channel"
             + "/" + newChannelId + "/ws"));
 
         // Send channelId to backend
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/read-messages`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/read-messages`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({
@@ -85,7 +85,7 @@ export default function ClippedDrawer() {
 
     const handleExitChannel = (channelId: number) => {
         // Send channelId to backend
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/exit-channel`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/exit-channel`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({
@@ -103,7 +103,7 @@ export default function ClippedDrawer() {
 
     const handleDeleteChannel = (channelId: number) => {
         // Send channelId to backend
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/delete-channel`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/delete-channel`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({

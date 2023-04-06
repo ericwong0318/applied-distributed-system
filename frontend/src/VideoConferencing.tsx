@@ -6,7 +6,7 @@ export function VideoConferencing() {
 
     // Get token
     useEffect(() => {
-            fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/join-video-conference`, {
+            fetch(`https://${process.env.REACT_APP_HOSTNAME}/join-video-conference`, {
                 method: "POST",
                 credentials: "include", // for receiving cookie
                 headers: {'Content-type': 'application/json'},

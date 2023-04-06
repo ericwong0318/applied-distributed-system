@@ -22,15 +22,15 @@ function Message(props: { userName: string, time: number, content: string, fileI
         if (props.fileId !== undefined) {
             urlencoded.append("mediaId", props.fileId);
         }
-        let requestOptions = {
-            method: 'POST',
-            headers: myHeaders,
-            body: urlencoded,
-            redirect: 'follow'
-        };
 
         // @ts-ignore
-        fetch("http://localhost:8081/download-media", requestOptions)
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/download-media`,
+            {
+                method: 'POST',
+                headers: myHeaders,
+                body: urlencoded,
+                redirect: 'follow'
+            })
             .then(response => response.blob())
             .then(blob => {
                 const url = window.URL.createObjectURL(blob);

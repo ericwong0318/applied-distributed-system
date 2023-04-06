@@ -39,7 +39,7 @@ export default function Upload(prop: { ws: WebSocket }) {
             redirect: 'follow'
         };
 
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/create-media`, requestOptions)
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/create-media`, requestOptions)
             .then(response => response.json())
             .then(result => {
                     const formData = createFormData();

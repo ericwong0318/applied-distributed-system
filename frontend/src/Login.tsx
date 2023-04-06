@@ -32,7 +32,7 @@ export default function Login() {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         // Send email and password to backend
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/login`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/login`, {
             method: "POST",
             credentials: "include", // for receiving cookie
             headers: {'Content-type': 'application/json',},

@@ -44,7 +44,7 @@ const router = createBrowserRouter([
 ],);
 
 export function checkJwt(setIsLogin: (value: (((prevState: boolean) => boolean) | boolean)) => void) {
-    fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/check-jwt`, {
+    fetch(`https://${process.env.REACT_APP_HOSTNAME}/check-jwt`, {
         method: "POST",
         credentials: "include", // for receiving cookie
         headers: {'Content-type': 'application/json'},

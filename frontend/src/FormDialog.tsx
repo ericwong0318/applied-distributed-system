@@ -32,7 +32,7 @@ export default function FormDialog() {
         handleCreateFormClose();
 
         // Create a new channel
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/create-channel`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/create-channel`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({channelName: channelName, email: localStorage.getItem('email')})
@@ -56,7 +56,7 @@ export default function FormDialog() {
         handleJoinFormClose();
 
         // Join a channel
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/join-channel`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/join-channel`, {
             method: "POST",
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify({channelId: channelId, email: localStorage.getItem('email')})

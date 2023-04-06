@@ -19,7 +19,7 @@ export default function Register() {
         });
 
         // Send email and password to backend
-        fetch(`http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/register`, {
+        fetch(`https://${process.env.REACT_APP_HOSTNAME}/register`, {
             method: "POST",
             headers: {
                 'Content-type': 'application/json',
