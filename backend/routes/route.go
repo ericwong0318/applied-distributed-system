@@ -7,11 +7,12 @@ import (
 )
 
 func HandleRoutes(r *gin.Engine) {
+	r.GET("/", services.ShowIndex)
+
 	// Authentications
-	// todo wrong REST API header
 	r.POST("/register", services.Register)
 	r.POST("/login", services.Login)
-	r.POST("/reset-password", services.ResetPassword)
+	r.PUT("/reset-password", services.ResetPassword)
 	r.POST("/check-jwt", services.CheckJwt)
 
 	// Create
@@ -19,17 +20,17 @@ func HandleRoutes(r *gin.Engine) {
 	r.POST("/create-media", services.CreateMedia)
 
 	// Read
-	r.POST("/read-messages", services.ReadMessages)
-	r.POST("/read-user", services.ReadUser)
-	r.POST("/download-media", services.DownloadMedia)
+	r.GET("/read-messages", services.ReadMessages)
+	r.GET("/read-user", services.ReadUser)
+	r.GET("/download-media", services.DownloadMedia)
 
 	// Update
-	r.POST("/join-channel", services.JoinChannel)
-	r.POST("/join-video-conference", services.JoinVideoConference)
+	r.PUT("/join-channel", services.JoinChannel)
+	r.PUT("/join-video-conference", services.JoinVideoConference)
 
 	// Delete
-	r.POST("/exit-channel", services.ExitChannel)
-	r.POST("/delete-channel", services.DeleteChannel)
+	r.DELETE("/exit-channel", services.ExitChannel)
+	r.DELETE("/delete-channel", services.DeleteChannel)
 }
 
 func HandleWebSocket(r *gin.Engine) {
